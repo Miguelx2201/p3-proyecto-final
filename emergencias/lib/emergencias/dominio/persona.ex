@@ -281,4 +281,45 @@ defmodule Emergencias.Dominio.Persona do
     %{persona | historial: Enum.reverse(propias)}
   end
 
+  # ---------------------------------------------------------------------------
+  # Validaciones
+
+  defp validar_texto(texto, razon) when is_binary(texto) do
+    if Util.vacio?(texto), do: {:error, razon}, else: {:ok, Util.sanitizar_texto(texto)}
+  end
+
+  defp validar_texto(_otro, razon), do: {:error, razon}
+
+  defp validar_edad(edad)
+       when is_integer(edad) and edad >= @edad_minima and edad <= @edad_maxima,
+       do: :ok
+
+  defp validar_edad(_edad), do: {:error, :edad_invalida}
+
+  defp validar_estado(estado) when estado in @estados, do: :ok
+  defp validar_estado(_estado), do: {:error, :estado_invalido}
+
+  defp parsear_edad(texto) do
+    with {:ok, edad} <- Util.parsear_entero(texto),
+         :ok <- validar_edad(edad) do
+      {:ok, edad}
+    else
+      _error -> {:error, :edad_invalida}
+    end
+  end
+
+  defp parsear_estado(texto) do
+    case Util.parsear_enum(texto, @estados) do
+      {:ok, estado} -> {:ok, estado}
+      {:error, _razon} -> {:error, :estado_invalido}
+    end
+  end
+
+  defp parsear_estado_anterior(texto) do
+    if Util.vacio?(texto), do: {:ok, nil}, else: parsear_estado(texto)
+  end
+
+  defp estado_a_texto(nil), do: ""
+  defp estado_a_texto(estado), do: Atom.to_string(estado)
+
 end
