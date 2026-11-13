@@ -161,4 +161,61 @@ defmodule Emergencias.Dominio.Persona do
 
   defp cumple_filtro?(_persona, _filtro), do: false
 
+  # ---------------------------------------------------------------------------
+  # CSV: personas.csv
+
+  @doc "Nombre del archivo de personas."
+  def archivo_csv, do: @archivo
+
+  @doc "Cabecera de `personas.csv`."
+  def cabecera_csv, do: @cabecera
+
+  @doc """
+  Línea de `personas.csv` (sin el historial, que va en su propio archivo).
+
+      iex> {:ok, p} = Emergencias.Dominio.Persona.crear("1094", "Andrés", 30, "centro", :localizada, "laura")
+      iex> Emergencias.Dominio.Persona.a_linea(p)
+      "1094;Andrés;30;centro;localizada"
+  """
+  def a_linea(%__MODULE__{} = persona) do
+    CSV.unir([
+      Util.sanitizar_texto(persona.documento),
+      Util.sanitizar_texto(persona.nombre),
+      persona.edad,
+      Util.sanitizar_texto(persona.zona),
+      persona.estado
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `personas.csv` en `{:ok, persona}` con historial vacío
+  (el historial se agrega con `con_historial/2`). Una línea corrupta da
+  `{:error, razon}`.
+  """
+  def de_linea(linea) when is_binary(linea) do
+    case CSV.separar(linea) do
+      [documento, nombre, edad, zona, estado] ->
+        with {:ok, documento} <- validar_texto(documento, :documento_vacio),
+             {:ok, nombre} <- validar_texto(nombre, :nombre_vacio),
+             {:ok, edad} <- parsear_edad(edad),
+             {:ok, zona} <- validar_texto(zona, :zona_vacia),
+             {:ok, estado} <- parsear_estado(estado) do
+          {:ok,
+           %__MODULE__{
+             documento: documento,
+             nombre: nombre,
+             edad: edad,
+             zona: zona,
+             estado: estado,
+             historial: []
+           }}
+        end
+
+      _otro ->
+        {:error, :linea_invalida}
+    end
+  end
+
+  def de_linea(_linea), do: {:error, :linea_invalida}
+
 end
