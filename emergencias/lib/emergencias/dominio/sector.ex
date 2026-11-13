@@ -67,7 +67,7 @@ defmodule Emergencias.Dominio.Sector do
 
   defp validar_cantidad(_otro), do: {:error, :cantidad_invalida}
 
-    @doc """
+  @doc """
   Convierte un sector en una línea de `sectores.csv`. No incluye sus puntos
   de atención: cada punto se guarda en su propio archivo.
   """

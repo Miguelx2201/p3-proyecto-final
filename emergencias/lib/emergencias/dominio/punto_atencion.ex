@@ -45,7 +45,7 @@ defmodule Emergencias.Dominio.PuntoAtencion do
 
   defp validar_cantidad(_otro), do: {:error, :cantidad_invalida}
 
-    @doc """
+  @doc """
   Convierte un punto de atención en una línea de `puntos_atencion.csv`.
   """
   def to_linea(%__MODULE__{} = punto) do
