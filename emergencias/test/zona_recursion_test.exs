@@ -4,6 +4,7 @@ defmodule Emergencias.Dominio.ZonaRecursionTest do
   alias Emergencias.Dominio.PuntoAtencion
   alias Emergencias.Dominio.Sector
   alias Emergencias.Dominio.Zona
+  alias Emergencias.Fabrica
 
   # Zona de prueba (estimadas = 1000, independiente de la suma):
   #
@@ -21,18 +22,29 @@ defmodule Emergencias.Dominio.ZonaRecursionTest do
   end
 
   defp punto(codigo, personas) do
-    {:ok, punto} = PuntoAtencion.crear(codigo, "Punto " <> codigo, personas)
-    punto
+    Fabrica.punto_atencion(
+      codigo: codigo,
+      nombre: "Punto " <> codigo,
+      personas_afectadas: personas
+    )
   end
 
   defp sector(codigo, personas, puntos) do
-    {:ok, sector} = Sector.crear(codigo, "Sector " <> codigo, personas)
-    %Sector{sector | puntos_atencion: puntos}
+    Fabrica.sector(
+      codigo: codigo,
+      nombre: "Sector " <> codigo,
+      personas_afectadas: personas,
+      puntos_atencion: puntos
+    )
   end
 
   defp zona(codigo, estimadas, sectores) do
-    {:ok, zona} = Zona.crear(codigo, "Zona " <> codigo, :critico, estimadas)
-    %Zona{zona | sectores: sectores}
+    Fabrica.zona(
+      codigo: codigo,
+      nombre: "Zona " <> codigo,
+      personas_afectadas: estimadas,
+      sectores: sectores
+    )
   end
 
   describe "total_personas/1" do
