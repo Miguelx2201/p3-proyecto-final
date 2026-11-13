@@ -105,4 +105,62 @@ defmodule Emergencias.Dominio.Mensaje do
 
   def para_destinatario(_mensajes, _documento), do: []
 
+
+  # ---------------------------------------------------------------------------
+  # CSV: mensajes.csv
+  # ---------------------------------------------------------------------------
+
+  @doc "Nombre del archivo de mensajes."
+  def archivo_csv, do: @archivo
+
+  @doc "Cabecera de `mensajes.csv`."
+  def cabecera_csv, do: @cabecera
+
+  @doc """
+  Línea de `mensajes.csv`: `id;fecha;remitente;documento;contenido;estado`.
+  """
+  def a_linea(%__MODULE__{} = mensaje) do
+    CSV.unir([
+      Util.sanitizar_texto(mensaje.id),
+      mensaje.fecha,
+      Util.sanitizar_texto(mensaje.remitente),
+      Util.sanitizar_texto(mensaje.documento_destinatario),
+      Util.sanitizar_texto(mensaje.contenido),
+      mensaje.estado
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `mensajes.csv` en `{:ok, mensaje}`. Una línea corrupta
+  da `{:error, razon}`: `:linea_invalida` (número de campos incorrecto o no es
+  texto), `:id_vacio`, `:fecha_vacia`, `:remitente_vacio`, `:documento_vacio`,
+  `:contenido_vacio` o `:estado_invalido`.
+  """
+  def de_linea(linea) when is_binary(linea) do
+    case CSV.separar(linea) do
+      [id, fecha, remitente, documento, contenido, estado] ->
+        with {:ok, id} <- validar_texto(id, :id_vacio),
+             {:ok, fecha} <- validar_texto(fecha, :fecha_vacia),
+             {:ok, remitente} <- validar_texto(remitente, :remitente_vacio),
+             {:ok, documento} <- validar_texto(documento, :documento_vacio),
+             {:ok, contenido} <- validar_texto(contenido, :contenido_vacio),
+             {:ok, estado} <- parsear_estado(estado) do
+          {:ok,
+           %__MODULE__{
+             id: id,
+             fecha: fecha,
+             remitente: remitente,
+             documento_destinatario: documento,
+             contenido: contenido,
+             estado: estado
+           }}
+        end
+
+      _otro ->
+        {:error, :linea_invalida}
+    end
+  end
+
+  def de_linea(_linea), do: {:error, :linea_invalida}
+
 end
