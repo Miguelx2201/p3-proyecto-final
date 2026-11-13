@@ -84,4 +84,39 @@ defmodule Emergencias.Dominio.Persona do
     end
   end
 
+  @doc """
+  Cambia el estado de la persona y agrega el cambio al inicio del historial.
+
+  Errores: `:estado_invalido`, `:usuario_vacio`, `:mismo_estado`,
+  `:transicion_invalida` (retroceder) y `:persona_invalida` (si el primer
+  argumento no es una Persona).
+  """
+  def cambiar_estado(%__MODULE__{estado: actual} = persona, nuevo, usuario) do
+    with :ok <- validar_estado(nuevo),
+         {:ok, usuario} <- validar_texto(usuario, :usuario_vacio),
+         :ok <- validar_transicion(actual, nuevo) do
+      {:ok, registrar(persona, actual, nuevo, usuario)}
+    end
+  end
+
+  def cambiar_estado(_persona, _nuevo, _usuario), do: {:error, :persona_invalida}
+
+  defp registrar(persona, de, a, usuario) do
+    entrada = %{fecha: Util.ahora(), de: de, a: a, usuario: usuario}
+    %{persona | estado: a, historial: [entrada | persona.historial]}
+  end
+
+  defp validar_transicion(estado, estado), do: {:error, :mismo_estado}
+
+  defp validar_transicion(actual, nuevo) do
+    if transicion_permitida?(actual, nuevo), do: :ok, else: {:error, :transicion_invalida}
+  end
+
+  # Única regla del orden de estados. Para exigir pasos estrictamente
+  # consecutivos basta cambiar la comparación por:
+  #   posicion(nuevo) == posicion(actual) + 1
+  defp transicion_permitida?(actual, nuevo), do: posicion(nuevo) > posicion(actual)
+
+  defp posicion(estado), do: Enum.find_index(@estados, fn otro -> otro == estado end)
+
 end
