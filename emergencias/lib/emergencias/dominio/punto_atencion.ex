@@ -44,4 +44,32 @@ defmodule Emergencias.Dominio.PuntoAtencion do
     do: {:ok, cantidad}
 
   defp validar_cantidad(_otro), do: {:error, :cantidad_invalida}
+
+    @doc """
+  Convierte un punto de atención en una línea de `puntos_atencion.csv`.
+  """
+  def to_linea(%__MODULE__{} = punto) do
+    Emergencias.CSV.unir([
+      Util.sanitizar_texto(punto.codigo),
+      Util.sanitizar_texto(punto.nombre),
+      punto.personas_afectadas
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `puntos_atencion.csv` en punto de atención.
+  Devuelve `{:error, :linea_invalida}` ante una línea corrupta (número de
+  campos distinto de 3, texto vacío o cantidad inválida).
+  """
+  def de_linea(linea) when is_binary(linea) do
+    with [codigo, nombre, personas] <- Emergencias.CSV.separar(linea),
+         true <- Enum.all?([codigo, nombre], fn texto -> not Util.vacio?(texto) end),
+         {:ok, personas} <- Util.parsear_entero_no_negativo(personas) do
+      {:ok, %__MODULE__{codigo: codigo, nombre: nombre, personas_afectadas: personas}}
+    else
+      _ -> {:error, :linea_invalida}
+    end
+  end
+
+  def de_linea(_otro), do: {:error, :linea_invalida}
 end

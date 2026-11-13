@@ -106,4 +106,42 @@ defmodule Emergencias.Dominio.Zona do
     do: {:ok, cantidad}
 
   defp validar_cantidad(_otro), do: {:error, :cantidad_invalida}
+
+  @doc """
+  Convierte una zona en una línea de `zonas.csv`. No incluye sus sectores:
+  cada sector se guarda en su propio archivo.
+  """
+  def to_linea(%__MODULE__{} = zona) do
+    Emergencias.CSV.unir([
+      Util.sanitizar_texto(zona.codigo),
+      Util.sanitizar_texto(zona.nombre),
+      Atom.to_string(zona.nivel),
+      zona.personas_afectadas
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `zonas.csv` en zona, siempre con `sectores: []`.
+  Devuelve `{:error, :linea_invalida}` ante una línea corrupta (número de
+  campos distinto de 4, texto vacío, nivel desconocido o cantidad inválida).
+  """
+  def de_linea(linea) when is_binary(linea) do
+    with [codigo, nombre, nivel, personas] <- Emergencias.CSV.separar(linea),
+         true <- Enum.all?([codigo, nombre], fn texto -> not Util.vacio?(texto) end),
+         {:ok, nivel} <- Util.parsear_enum(nivel, @niveles),
+         {:ok, personas} <- Util.parsear_entero_no_negativo(personas) do
+      {:ok,
+       %__MODULE__{
+         codigo: codigo,
+         nombre: nombre,
+         nivel: nivel,
+         personas_afectadas: personas,
+         sectores: []
+       }}
+    else
+      _ -> {:error, :linea_invalida}
+    end
+  end
+
+  def de_linea(_otro), do: {:error, :linea_invalida}
 end

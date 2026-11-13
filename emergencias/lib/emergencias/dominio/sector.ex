@@ -66,4 +66,39 @@ defmodule Emergencias.Dominio.Sector do
     do: {:ok, cantidad}
 
   defp validar_cantidad(_otro), do: {:error, :cantidad_invalida}
+
+    @doc """
+  Convierte un sector en una línea de `sectores.csv`. No incluye sus puntos
+  de atención: cada punto se guarda en su propio archivo.
+  """
+  def to_linea(%__MODULE__{} = sector) do
+    Emergencias.CSV.unir([
+      Util.sanitizar_texto(sector.codigo),
+      Util.sanitizar_texto(sector.nombre),
+      sector.personas_afectadas
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `sectores.csv` en sector, siempre con
+  `puntos_atencion: []`. Devuelve `{:error, :linea_invalida}` ante una línea
+  corrupta (número de campos distinto de 3, texto vacío o cantidad inválida).
+  """
+  def de_linea(linea) when is_binary(linea) do
+    with [codigo, nombre, personas] <- Emergencias.CSV.separar(linea),
+         true <- Enum.all?([codigo, nombre], fn texto -> not Util.vacio?(texto) end),
+         {:ok, personas} <- Util.parsear_entero_no_negativo(personas) do
+      {:ok,
+       %__MODULE__{
+         codigo: codigo,
+         nombre: nombre,
+         personas_afectadas: personas,
+         puntos_atencion: []
+       }}
+    else
+      _ -> {:error, :linea_invalida}
+    end
+  end
+
+  def de_linea(_otro), do: {:error, :linea_invalida}
 end
