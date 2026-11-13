@@ -163,4 +163,25 @@ defmodule Emergencias.Dominio.Mensaje do
 
   def de_linea(_linea), do: {:error, :linea_invalida}
 
+  # ---------------------------------------------------------------------------
+  # Validaciones
+  # ---------------------------------------------------------------------------
+
+  # Sanitiza primero y valida después, para que un texto hecho solo de `;`,
+  # saltos de línea o espacios cuente como vacío.
+  defp validar_texto(texto, razon) when is_binary(texto) do
+    limpio = Util.sanitizar_texto(texto)
+    if limpio == "", do: {:error, razon}, else: {:ok, limpio}
+  end
+
+  defp validar_texto(_otro, razon), do: {:error, razon}
+
+  defp parsear_estado(texto) do
+    case Util.parsear_enum(texto, @estados) do
+      {:ok, estado} -> {:ok, estado}
+      {:error, _razon} -> {:error, :estado_invalido}
+    end
+  end
+
+
 end
