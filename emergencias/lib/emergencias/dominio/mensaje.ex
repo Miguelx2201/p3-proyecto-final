@@ -87,5 +87,22 @@ defmodule Emergencias.Dominio.Mensaje do
   def marcar_entregado(%__MODULE__{estado: :entregado}), do: {:error, :ya_entregado}
   def marcar_entregado(_mensaje), do: {:error, :mensaje_invalido}
 
+  # ---------------------------------------------------------------------------
+  # Consulta
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Mensajes cuyo destinatario tiene el `documento` dado, en el mismo orden de la
+  lista. Compara igualdad exacta (con `trim` del documento buscado).
+
+  Ignora los elementos que no son `Mensaje`. Si `mensajes` no es una lista o
+  `documento` no es texto, devuelve `[]`.
+  """
+  def para_destinatario(mensajes, documento) when is_list(mensajes) and is_binary(documento) do
+    buscado = String.trim(documento)
+    for %__MODULE__{documento_destinatario: ^buscado} = mensaje <- mensajes, do: mensaje
+  end
+
+  def para_destinatario(_mensajes, _documento), do: []
 
 end
