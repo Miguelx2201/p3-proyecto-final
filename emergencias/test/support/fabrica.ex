@@ -15,6 +15,7 @@ defmodule Emergencias.Fabrica do
   alias Emergencias.Dominio.{
     Albergue,
     Mascota,
+    Movimiento,
     Necesidad,
     Persona,
     PuntoAtencion,
@@ -116,6 +117,22 @@ defmodule Emergencias.Fabrica do
         unidad: "litros",
         ubicacion: "centro_acopio_1",
         zona: "centro"
+      ],
+      atributos
+    )
+  end
+
+  def movimiento(atributos \\ []) do
+    construir(
+      Movimiento,
+      [
+        id: "MV001",
+        recurso_id: "R001",
+        tipo: :entrada,
+        cantidad: 10,
+        fecha: @fecha,
+        usuario: "laura",
+        referencia: nil
       ],
       atributos
     )
