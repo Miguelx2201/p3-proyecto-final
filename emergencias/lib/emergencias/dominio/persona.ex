@@ -119,4 +119,46 @@ defmodule Emergencias.Dominio.Persona do
 
   defp posicion(estado), do: Enum.find_index(@estados, fn otro -> otro == estado end)
 
+  # ---------------------------------------------------------------------------
+  # Búsqueda
+
+  @doc """
+  Verdadero si la persona cumple todos los filtros dados.
+
+  `filtros` es una keyword list con cualquiera de estas claves:
+
+    * `nombre:` el nombre contiene el texto, sin distinguir mayúsculas.
+    * `documento:` igual exacto.
+    * `zona:` igual exacto al código de la zona.
+    * `estado:` igual al átomo del estado.
+
+  Una lista vacía coincide con cualquier persona. Un filtro con valor `nil` se
+  ignora. Un filtro con clave desconocida o valor de tipo incorrecto hace que
+  no coincida.
+  """
+  def coincide?(%__MODULE__{} = persona, filtros) when is_list(filtros) do
+    Enum.all?(filtros, fn filtro -> cumple_filtro?(persona, filtro) end)
+  end
+
+  def coincide?(_persona, _filtros), do: false
+
+  defp cumple_filtro?(_persona, {clave, nil}) when clave in @filtros, do: true
+
+  defp cumple_filtro?(persona, {:nombre, texto}) when is_binary(texto) do
+    persona.nombre
+    |> String.downcase()
+    |> String.contains?(texto |> String.trim() |> String.downcase())
+  end
+
+  defp cumple_filtro?(persona, {:documento, documento}) when is_binary(documento),
+    do: persona.documento == String.trim(documento)
+
+  defp cumple_filtro?(persona, {:zona, zona}) when is_binary(zona),
+    do: persona.zona == String.trim(zona)
+
+  defp cumple_filtro?(persona, {:estado, estado}) when is_atom(estado),
+    do: persona.estado == estado
+
+  defp cumple_filtro?(_persona, _filtro), do: false
+
 end
