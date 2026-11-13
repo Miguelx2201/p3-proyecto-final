@@ -218,4 +218,67 @@ defmodule Emergencias.Dominio.Persona do
 
   def de_linea(_linea), do: {:error, :linea_invalida}
 
+  # ---------------------------------------------------------------------------
+  # CSV: historial_personas.csv (una fila por cambio)
+
+  @doc "Nombre del archivo del historial de personas."
+  def archivo_historial_csv, do: @archivo_historial
+
+  @doc "Cabecera de `historial_personas.csv`."
+  def cabecera_historial_csv, do: @cabecera_historial
+
+  @doc """
+  Filas `{documento, entrada}` del historial en orden cronológico (la más
+  antigua primero), el mismo orden en que se agregan al archivo.
+  """
+  def filas_historial(%__MODULE__{documento: documento, historial: historial}) do
+    historial
+    |> Enum.reverse()
+    |> Enum.map(fn entrada -> {documento, entrada} end)
+  end
+
+  @doc "Línea de `historial_personas.csv` para una fila `{documento, entrada}`."
+  def historial_a_linea({documento, %{fecha: fecha, de: de, a: a, usuario: usuario}}) do
+    CSV.unir([
+      Util.sanitizar_texto(documento),
+      fecha,
+      estado_a_texto(de),
+      a,
+      Util.sanitizar_texto(usuario)
+    ])
+  end
+
+  @doc """
+  Convierte una línea de `historial_personas.csv` en `{:ok, {documento, entrada}}`.
+  El campo `de` vacío se lee como `nil`.
+  """
+  def historial_de_linea(linea) when is_binary(linea) do
+    case CSV.separar(linea) do
+      [documento, fecha, de, a, usuario] ->
+        with {:ok, documento} <- validar_texto(documento, :documento_vacio),
+             {:ok, fecha} <- validar_texto(fecha, :fecha_vacia),
+             {:ok, de} <- parsear_estado_anterior(de),
+             {:ok, a} <- parsear_estado(a),
+             {:ok, usuario} <- validar_texto(usuario, :usuario_vacio) do
+          {:ok, {documento, %{fecha: fecha, de: de, a: a, usuario: usuario}}}
+        end
+
+      _otro ->
+        {:error, :linea_invalida}
+    end
+  end
+
+  def historial_de_linea(_linea), do: {:error, :linea_invalida}
+
+  @doc """
+  Reemplaza el historial de la persona con las filas de su documento.
+
+  `filas` va en orden cronológico (como sale del archivo); el historial queda
+  con el más reciente primero. Las filas de otros documentos se ignoran.
+  """
+  def con_historial(%__MODULE__{documento: documento} = persona, filas) when is_list(filas) do
+    propias = for {^documento, entrada} <- filas, do: entrada
+    %{persona | historial: Enum.reverse(propias)}
+  end
+
 end
