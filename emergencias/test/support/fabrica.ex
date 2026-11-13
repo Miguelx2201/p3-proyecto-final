@@ -186,4 +186,19 @@ defmodule Emergencias.Fabrica do
       atributos
     )
   end
+
+  def mensaje(atributos \\ []) do
+    construir(
+      Mensaje,
+      [
+        id: "MS001",
+        fecha: @fecha,
+        remitente: "laura",
+        documento_destinatario: "1094",
+        contenido: "Estamos bien, te esperamos en el albergue",
+        estado: :pendiente
+      ],
+      atributos
+    )
+  end
 end
