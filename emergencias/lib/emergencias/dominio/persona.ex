@@ -238,7 +238,7 @@ defmodule Emergencias.Dominio.Persona do
   end
 
   @doc "Línea de `historial_personas.csv` para una fila `{documento, entrada}`."
-  def historial_a_linea({documento, %{fecha: fecha, de: de, a: a, usuario: usuario}}) do
+  def historial_to_linea({documento, %{fecha: fecha, de: de, a: a, usuario: usuario}}) do
     CSV.unir([
       Util.sanitizar_texto(documento),
       fecha,

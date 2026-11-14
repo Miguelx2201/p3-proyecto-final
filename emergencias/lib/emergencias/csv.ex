@@ -7,7 +7,7 @@ defmodule Emergencias.CSV do
 
   Cada entidad aporta dos funciones que se pasan como argumento:
 
-    * `a_linea`: recibe la entidad y devuelve su línea de texto (sin salto de línea).
+    * `to_linea`: recibe la entidad y devuelve su línea de texto (sin salto de línea).
     * `de_linea`: recibe una línea de texto y devuelve `{:ok, entidad}` o
       `{:error, razon}`. **Debe devolver una tupla de error ante una línea
       corrupta** (por ejemplo, con una cláusula final que acepte cualquier valor),
@@ -31,9 +31,9 @@ defmodule Emergencias.CSV do
   Crea la carpeta si no existe. Escribe primero a un archivo temporal y luego lo
   renombra, así una falla a mitad de la escritura no deja el archivo a medias.
   """
-  def escribir(ruta, cabecera, entidades, a_linea) do
+  def escribir(ruta, cabecera, entidades, to_linea) do
     contenido =
-      cabecera <> "\n" <> Enum.map_join(entidades, fn entidad -> a_linea.(entidad) <> "\n" end)
+      cabecera <> "\n" <> Enum.map_join(entidades, fn entidad -> to_linea.(entidad) <> "\n" end)
 
     temporal = ruta <> ".tmp"
 
@@ -53,10 +53,10 @@ defmodule Emergencias.CSV do
 
   Si el archivo no existe lo crea con la cabecera.
   """
-  def agregar(ruta, cabecera, entidad, a_linea) do
+  def agregar(ruta, cabecera, entidad, to_linea) do
     with :ok <- File.mkdir_p(Path.dirname(ruta)),
          :ok <- asegurar_cabecera(ruta, cabecera),
-         :ok <- File.write(ruta, a_linea.(entidad) <> "\n", [:append]) do
+         :ok <- File.write(ruta, to_linea.(entidad) <> "\n", [:append]) do
       :ok
     end
   end

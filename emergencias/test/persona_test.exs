@@ -329,12 +329,12 @@ defmodule Emergencias.Dominio.PersonaTest do
     test "convierte a línea y de vuelta; de vacío se lee como nil", %{persona: persona} do
       [inicial, cambio] = Persona.filas_historial(persona)
 
-      linea_inicial = Persona.historial_a_linea(inicial)
+      linea_inicial = Persona.historial_to_linea(inicial)
       {"1094", %{fecha: fecha}} = inicial
       assert linea_inicial == "1094;#{fecha};;reportada;laura"
 
       assert {:ok, ^inicial} = Persona.historial_de_linea(linea_inicial)
-      assert {:ok, ^cambio} = Persona.historial_de_linea(Persona.historial_a_linea(cambio))
+      assert {:ok, ^cambio} = Persona.historial_de_linea(Persona.historial_to_linea(cambio))
     end
 
     test "rechaza líneas de historial corruptas" do
@@ -372,8 +372,8 @@ defmodule Emergencias.Dominio.PersonaTest do
 
       [inicial, cambio] = Persona.filas_historial(persona)
       historial_csv = Persona.cabecera_historial_csv()
-      :ok = CSV.escribir(ruta_historial, historial_csv, [inicial], &Persona.historial_a_linea/1)
-      :ok = CSV.agregar(ruta_historial, historial_csv, cambio, &Persona.historial_a_linea/1)
+      :ok = CSV.escribir(ruta_historial, historial_csv, [inicial], &Persona.historial_to_linea/1)
+      :ok = CSV.agregar(ruta_historial, historial_csv, cambio, &Persona.historial_to_linea/1)
 
       assert {:ok, [leida]} = CSV.leer(ruta_personas, &Persona.de_linea/1)
       assert {:ok, filas} = CSV.leer(ruta_historial, &Persona.historial_de_linea/1)

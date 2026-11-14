@@ -2,7 +2,7 @@ defmodule Emergencias.Persistencia do
   @moduledoc """
   Punto único para guardar y cargar las entidades en archivos CSV.
 
-  Usa `Emergencias.CSV` para leer y escribir, y las funciones `to_linea`/`a_linea`
+  Usa `Emergencias.CSV` para leer y escribir, y las funciones `to_linea`
   y `de_linea` de cada entidad para convertir. La carpeta de datos sale de
   `Emergencias.CSV.ruta/1` (`:data_dir`).
 
@@ -78,13 +78,13 @@ defmodule Emergencias.Persistencia do
              CSV.ruta(@archivo_sectores),
              @cabecera_sectores,
              filas_sectores(zonas),
-             &sector_a_linea/1
+             &sector_to_linea/1
            ) do
       CSV.escribir(
         CSV.ruta(@archivo_puntos),
         @cabecera_puntos,
         filas_puntos(zonas),
-        &punto_a_linea/1
+        &punto_to_linea/1
       )
     end
   end
@@ -133,7 +133,7 @@ defmodule Emergencias.Persistencia do
 
   # sectores.csv: zona;codigo;nombre;personas. Los tres últimos campos son los
   # de `Sector.to_linea/1`.
-  defp sector_a_linea({zona, sector}),
+  defp sector_to_linea({zona, sector}),
     do: CSV.unir([Util.sanitizar_texto(zona), Sector.to_linea(sector)])
 
   defp sector_de_linea(linea) when is_binary(linea) do
@@ -148,7 +148,7 @@ defmodule Emergencias.Persistencia do
 
   # puntos.csv: zona;sector;codigo;nombre;personas. Los tres últimos campos son
   # los de `PuntoAtencion.to_linea/1`.
-  defp punto_a_linea({zona, sector, punto}) do
+  defp punto_to_linea({zona, sector, punto}) do
     CSV.unir([
       Util.sanitizar_texto(zona),
       Util.sanitizar_texto(sector),
@@ -284,7 +284,7 @@ defmodule Emergencias.Persistencia do
         CSV.ruta(Persona.archivo_historial_csv()),
         Persona.cabecera_historial_csv(),
         Enum.flat_map(personas, &Persona.filas_historial/1),
-        &Persona.historial_a_linea/1
+        &Persona.historial_to_linea/1
       )
     end
   end
@@ -337,9 +337,9 @@ defmodule Emergencias.Persistencia do
   # Ayudas
   # ---------------------------------------------------------------------------
 
-  defp guardar(archivo, cabecera, entidades, modulo, a_linea) do
+  defp guardar(archivo, cabecera, entidades, modulo, to_linea) do
     with :ok <- validar_lista(entidades, modulo) do
-      CSV.escribir(CSV.ruta(archivo), cabecera, entidades, a_linea)
+      CSV.escribir(CSV.ruta(archivo), cabecera, entidades, to_linea)
     end
   end
 
