@@ -13,6 +13,7 @@ defmodule Emergencias.Fabrica do
   """
 
   alias Emergencias.Dominio.{
+    Actividad,
     Albergue,
     Mascota,
     Movimiento,
@@ -134,6 +135,19 @@ defmodule Emergencias.Fabrica do
         fecha: @fecha,
         usuario: "laura",
         referencia: nil
+      ],
+      atributos
+    )
+  end
+
+  def actividad(atributos \\ []) do
+    construir(
+      Actividad,
+      [
+        fecha: @fecha,
+        usuario: "laura",
+        comando: "crear_necesidad",
+        resultado: "ok"
       ],
       atributos
     )
