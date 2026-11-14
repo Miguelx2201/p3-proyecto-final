@@ -105,7 +105,6 @@ defmodule Emergencias.Dominio.Mensaje do
 
   def para_destinatario(_mensajes, _documento), do: []
 
-
   # ---------------------------------------------------------------------------
   # CSV: mensajes.csv
   # ---------------------------------------------------------------------------
@@ -182,6 +181,4 @@ defmodule Emergencias.Dominio.Mensaje do
       {:error, _razon} -> {:error, :estado_invalido}
     end
   end
-
-
 end

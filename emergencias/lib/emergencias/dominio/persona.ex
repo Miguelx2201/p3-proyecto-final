@@ -321,5 +321,4 @@ defmodule Emergencias.Dominio.Persona do
 
   defp estado_a_texto(nil), do: ""
   defp estado_a_texto(estado), do: Atom.to_string(estado)
-
 end
