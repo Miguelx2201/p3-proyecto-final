@@ -74,6 +74,34 @@ defmodule Emergencias.Dominio.Zona do
   def agregar_sector(%__MODULE__{}, _otro), do: {:error, :sector_invalido}
 
   @doc """
+  Agrega un punto de atención al sector de la zona que tenga ese código.
+
+  Busca el sector entre los sectores de la zona (no entre sus puntos) y delega
+  en `Sector.agregar_punto/2`, que agrega el punto al final de la lista.
+
+  Errores posibles (se revisan en este orden): `{:error, :no_encontrado}` si la
+  zona no tiene un sector con ese código (aunque el punto sea inválido), y los
+  de `Sector.agregar_punto/2`: `{:error, :id_duplicado}` si el sector ya tiene
+  un punto con ese código y `{:error, :punto_invalido}` si el tercer argumento
+  no es un `%PuntoAtencion{}`.
+  """
+  @spec agregar_punto(t(), term(), term()) :: {:ok, t()} | {:error, atom()}
+  def agregar_punto(%__MODULE__{} = zona, codigo_sector, punto) do
+    case Enum.find_index(zona.sectores, fn sector -> sector.codigo == codigo_sector end) do
+      nil ->
+        {:error, :no_encontrado}
+
+      indice ->
+        sector = Enum.at(zona.sectores, indice)
+
+        with {:ok, sector_nuevo} <- Sector.agregar_punto(sector, punto) do
+          sectores = List.replace_at(zona.sectores, indice, sector_nuevo)
+          {:ok, %__MODULE__{zona | sectores: sectores}}
+        end
+    end
+  end
+
+  @doc """
   Cambia el nivel de afectación de la zona.
 
   Devuelve `{:error, :nivel_invalido}` si el nivel no está permitido. Cambiar al
