@@ -317,21 +317,21 @@ defmodule Emergencias.Dominio.NecesidadTest do
     end
 
     test "a_linea escribe todos los campos separados por ;" do
-      assert Necesidad.a_linea(Fabrica.necesidad()) ==
+      assert Necesidad.to_linea(Fabrica.necesidad()) ==
                "N001;agua;;Punto de atención sector 3;30;0;centro;critica;laura;pendiente;" <>
                  "zona:centro;2026-01-01T00:00:00Z"
     end
 
     test "a_linea escribe asociada_a como albergue:A01 y persona:123" do
-      assert Necesidad.a_linea(Fabrica.necesidad(asociada_a: {:albergue, "A01"})) =~
+      assert Necesidad.to_linea(Fabrica.necesidad(asociada_a: {:albergue, "A01"})) =~
                ";albergue:A01;"
 
-      assert Necesidad.a_linea(Fabrica.necesidad(asociada_a: {:persona, "123"})) =~
+      assert Necesidad.to_linea(Fabrica.necesidad(asociada_a: {:persona, "123"})) =~
                ";persona:123;"
     end
 
     test "a_linea sanitiza el texto libre" do
-      linea = Necesidad.a_linea(Fabrica.necesidad(descripcion: "uno; dos\ntres"))
+      linea = Necesidad.to_linea(Fabrica.necesidad(descripcion: "uno; dos\ntres"))
       assert length(String.split(linea, ";")) == 12
       assert linea =~ ";uno  dos tres;"
     end
@@ -349,7 +349,7 @@ defmodule Emergencias.Dominio.NecesidadTest do
       ]
 
       for n <- necesidades do
-        assert {:ok, ^n} = n |> Necesidad.a_linea() |> Necesidad.de_linea()
+        assert {:ok, ^n} = n |> Necesidad.to_linea() |> Necesidad.de_linea()
       end
     end
 
@@ -363,7 +363,7 @@ defmodule Emergencias.Dominio.NecesidadTest do
     end
 
     test "de_linea rechaza valores corruptos en cada campo" do
-      base = Necesidad.a_linea(Fabrica.necesidad())
+      base = Necesidad.to_linea(Fabrica.necesidad())
 
       casos = [
         {"agua", "comida"},

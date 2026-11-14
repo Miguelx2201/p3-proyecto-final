@@ -108,7 +108,7 @@ defmodule Emergencias.Dominio.RecursoTest do
     test "a_linea/1 sigue el orden de la cabecera" do
       assert Recurso.cabecera() == "id;nombre;categoria;cantidad;unidad;ubicacion;zona"
       linea = "R001;agua;agua;50;litros;centro_acopio_1;centro"
-      assert Recurso.a_linea(Fabrica.recurso()) == linea
+      assert Recurso.to_linea(Fabrica.recurso()) == linea
     end
 
     test "de_linea/1 lee una línea válida" do
@@ -118,7 +118,7 @@ defmodule Emergencias.Dominio.RecursoTest do
 
     test "a_linea/1 y de_linea/1 son inversas" do
       recurso = Fabrica.recurso(categoria: :primeros_auxilios, cantidad_disponible: 0)
-      assert {:ok, ^recurso} = recurso |> Recurso.a_linea() |> Recurso.de_linea()
+      assert {:ok, ^recurso} = recurso |> Recurso.to_linea() |> Recurso.de_linea()
     end
 
     test "de_linea/1 rechaza líneas corruptas sin lanzar excepción" do

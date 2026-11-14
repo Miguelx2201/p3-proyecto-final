@@ -193,18 +193,18 @@ defmodule Emergencias.Dominio.MascotaTest do
     test "a_linea escribe todos los campos en orden" do
       m = Fabrica.mascota(caracteristicas: "collar rojo", estado: :posible_coincidencia)
 
-      assert Mascota.a_linea(m) ==
+      assert Mascota.to_linea(m) ==
                "M001;perdida;perro;Luna;collar rojo;negra;mediano;centro;3001234567;posible_coincidencia"
     end
 
     test "ida y vuelta: de_linea(a_linea(m)) devuelve la misma mascota" do
       m = Fabrica.mascota(caracteristicas: "collar rojo", estado: :resuelta)
-      assert {:ok, ^m} = Mascota.de_linea(Mascota.a_linea(m))
+      assert {:ok, ^m} = Mascota.de_linea(Mascota.to_linea(m))
     end
 
     test "un nombre desconocido se guarda vacío y vuelve como nil" do
       m = Fabrica.mascota(nombre: nil)
-      linea = Mascota.a_linea(m)
+      linea = Mascota.to_linea(m)
 
       assert linea =~ "perro;;"
       assert {:ok, %Mascota{nombre: nil}} = Mascota.de_linea(linea)
@@ -253,7 +253,7 @@ defmodule Emergencias.Dominio.MascotaTest do
         )
       ]
 
-      assert :ok = CSV.escribir(ruta, Mascota.cabecera(), mascotas, &Mascota.a_linea/1)
+      assert :ok = CSV.escribir(ruta, Mascota.cabecera(), mascotas, &Mascota.to_linea/1)
       assert {:ok, ^mascotas} = CSV.leer(ruta, &Mascota.de_linea/1)
     end
 
@@ -261,7 +261,7 @@ defmodule Emergencias.Dominio.MascotaTest do
     test "una línea corrupta en el archivo se reporta con su número", %{tmp_dir: tmp_dir} do
       ruta = Path.join(tmp_dir, Mascota.archivo())
 
-      contenido = Mascota.cabecera() <> "\n" <> Mascota.a_linea(Fabrica.mascota()) <> "\nbasura\n"
+      contenido = Mascota.cabecera() <> "\n" <> Mascota.to_linea(Fabrica.mascota()) <> "\nbasura\n"
       assert :ok = File.write(ruta, contenido)
 
       assert {:error, {:linea_invalida, 3}} = CSV.leer(ruta, &Mascota.de_linea/1)

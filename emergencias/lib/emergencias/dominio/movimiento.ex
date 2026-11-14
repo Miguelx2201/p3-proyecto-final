@@ -71,7 +71,7 @@ defmodule Emergencias.Dominio.Movimiento do
 
   Un `id` o una `referencia` en `nil` se escriben como campo vacío.
   """
-  def a_linea(%__MODULE__{} = movimiento) do
+  def to_linea(%__MODULE__{} = movimiento) do
     CSV.unir([
       Util.sanitizar_texto(movimiento.id),
       Util.sanitizar_texto(movimiento.recurso_id),

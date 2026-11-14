@@ -174,10 +174,10 @@ defmodule Emergencias.Dominio.Persona do
   Línea de `personas.csv` (sin el historial, que va en su propio archivo).
 
       iex> {:ok, p} = Emergencias.Dominio.Persona.crear("1094", "Andrés", 30, "centro", :localizada, "laura")
-      iex> Emergencias.Dominio.Persona.a_linea(p)
+      iex> Emergencias.Dominio.Persona.to_linea(p)
       "1094;Andrés;30;centro;localizada"
   """
-  def a_linea(%__MODULE__{} = persona) do
+  def to_linea(%__MODULE__{} = persona) do
     CSV.unir([
       Util.sanitizar_texto(persona.documento),
       Util.sanitizar_texto(persona.nombre),

@@ -54,12 +54,12 @@ defmodule Emergencias.Dominio.MovimientoTest do
     test "a_linea/1 sigue el orden de la cabecera" do
       assert Movimiento.cabecera() == "id;recurso_id;tipo;cantidad;fecha;usuario;referencia"
 
-      assert Movimiento.a_linea(Fabrica.movimiento(referencia: "N001")) ==
+      assert Movimiento.to_linea(Fabrica.movimiento(referencia: "N001")) ==
                "MV001;R001;entrada;10;2026-01-01T00:00:00Z;laura;N001"
     end
 
     test "a_linea/1 escribe la referencia nil como campo vacío" do
-      assert Movimiento.a_linea(Fabrica.movimiento()) ==
+      assert Movimiento.to_linea(Fabrica.movimiento()) ==
                "MV001;R001;entrada;10;2026-01-01T00:00:00Z;laura;"
     end
 
@@ -78,7 +78,7 @@ defmodule Emergencias.Dominio.MovimientoTest do
 
     test "a_linea/1 y de_linea/1 son inversas" do
       movimiento = Fabrica.movimiento(tipo: :asignacion, referencia: "N007")
-      assert {:ok, ^movimiento} = movimiento |> Movimiento.a_linea() |> Movimiento.de_linea()
+      assert {:ok, ^movimiento} = movimiento |> Movimiento.to_linea() |> Movimiento.de_linea()
     end
 
     test "de_linea/1 rechaza líneas corruptas sin lanzar excepción" do

@@ -217,7 +217,7 @@ defmodule Emergencias.Persistencia do
         Necesidad.cabecera(),
         necesidades,
         Necesidad,
-        &Necesidad.a_linea/1
+        &Necesidad.to_linea/1
       )
 
   @doc "Carga las necesidades de `necesidades.csv`."
@@ -227,7 +227,7 @@ defmodule Emergencias.Persistencia do
   @doc "Guarda todos los recursos en `recursos.csv`."
   @spec guardar_recursos([Recurso.t()]) :: :ok | {:error, term()}
   def guardar_recursos(recursos),
-    do: guardar(@archivo_recursos, Recurso.cabecera(), recursos, Recurso, &Recurso.a_linea/1)
+    do: guardar(@archivo_recursos, Recurso.cabecera(), recursos, Recurso, &Recurso.to_linea/1)
 
   @doc "Carga los recursos de `recursos.csv`."
   @spec cargar_recursos() :: {:ok, [Recurso.t()]} | {:error, term()}
@@ -236,7 +236,7 @@ defmodule Emergencias.Persistencia do
   @doc "Guarda todas las mascotas en `mascotas.csv`."
   @spec guardar_mascotas([Mascota.t()]) :: :ok | {:error, term()}
   def guardar_mascotas(mascotas),
-    do: guardar(Mascota.archivo(), Mascota.cabecera(), mascotas, Mascota, &Mascota.a_linea/1)
+    do: guardar(Mascota.archivo(), Mascota.cabecera(), mascotas, Mascota, &Mascota.to_linea/1)
 
   @doc "Carga las mascotas de `mascotas.csv`."
   @spec cargar_mascotas() :: {:ok, [Mascota.t()]} | {:error, term()}
@@ -251,7 +251,7 @@ defmodule Emergencias.Persistencia do
         Mensaje.cabecera_csv(),
         mensajes,
         Mensaje,
-        &Mensaje.a_linea/1
+        &Mensaje.to_linea/1
       )
 
   @doc "Carga los mensajes de `mensajes.csv`."
@@ -278,7 +278,7 @@ defmodule Emergencias.Persistencia do
              CSV.ruta(Persona.archivo_csv()),
              Persona.cabecera_csv(),
              personas,
-             &Persona.a_linea/1
+             &Persona.to_linea/1
            ) do
       CSV.escribir(
         CSV.ruta(Persona.archivo_historial_csv()),
@@ -325,7 +325,7 @@ defmodule Emergencias.Persistencia do
         CSV.ruta(@archivo_movimientos),
         Movimiento.cabecera(),
         movimiento,
-        &Movimiento.a_linea/1
+        &Movimiento.to_linea/1
       )
     end
   end

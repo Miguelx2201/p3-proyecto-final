@@ -118,7 +118,7 @@ defmodule Emergencias.Dominio.Mensaje do
   @doc """
   Línea de `mensajes.csv`: `id;fecha;remitente;documento;contenido;estado`.
   """
-  def a_linea(%__MODULE__{} = mensaje) do
+  def to_linea(%__MODULE__{} = mensaje) do
     CSV.unir([
       Util.sanitizar_texto(mensaje.id),
       mensaje.fecha,
