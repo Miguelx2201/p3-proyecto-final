@@ -1,6 +1,7 @@
 defmodule Emergencias.Dominio.ZonaTest do
   use ExUnit.Case, async: true
 
+  alias Emergencias.Dominio.Sector
   alias Emergencias.Dominio.Zona
   alias Emergencias.Fabrica
 
@@ -115,6 +116,116 @@ defmodule Emergencias.Dominio.ZonaTest do
       assert {:error, :sector_invalido} = Zona.agregar_sector(zona, nil)
       assert {:error, :sector_invalido} = Zona.agregar_sector(zona, "S1")
       assert {:error, :sector_invalido} = Zona.agregar_sector(zona, Fabrica.punto_atencion())
+    end
+  end
+
+  describe "agregar_punto/3" do
+    defp zona_con_sectores do
+      Fabrica.zona(
+        sectores: [
+          Fabrica.sector(codigo: "S1"),
+          Fabrica.sector(codigo: "S2", nombre: "Sector 2")
+        ]
+      )
+    end
+
+    test "agrega el punto al sector indicado" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+
+      assert {:ok, %Zona{sectores: [s1, s2]}} =
+               Zona.agregar_punto(zona_con_sectores(), "S2", punto)
+
+      assert s1.puntos_atencion == []
+      assert %Sector{codigo: "S2", puntos_atencion: [^punto]} = s2
+    end
+
+    test "agrega varios puntos al mismo sector y conserva el orden" do
+      p1 = Fabrica.punto_atencion(codigo: "P1")
+      p2 = Fabrica.punto_atencion(codigo: "P2", nombre: "Punto 2")
+
+      assert {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", p1)
+      assert {:ok, zona} = Zona.agregar_punto(zona, "S1", p2)
+      assert [%Sector{puntos_atencion: [^p1, ^p2]}, _s2] = zona.sectores
+    end
+
+    test "conserva el orden de los sectores y los demás campos de la zona" do
+      zona = Fabrica.zona(nivel: :bajo, personas_afectadas: 90)
+      zona = %Zona{zona | sectores: zona_con_sectores().sectores}
+
+      assert {:ok, nueva} = Zona.agregar_punto(zona, "S1", Fabrica.punto_atencion())
+      assert Enum.map(nueva.sectores, & &1.codigo) == ["S1", "S2"]
+      assert nueva.nivel == :bajo
+      assert nueva.personas_afectadas == 90
+      assert nueva.codigo == zona.codigo
+    end
+
+    test "el punto agregado se puede encontrar con buscar_nodo/2" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+
+      assert {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", punto)
+      assert {:ok, {:punto, ^punto}} = Zona.buscar_nodo(zona, "P1")
+    end
+
+    test "permite el mismo código de punto en sectores distintos" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+
+      assert {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", punto)
+      assert {:ok, _zona} = Zona.agregar_punto(zona, "S2", punto)
+    end
+
+    test "rechaza un sector que la zona no tiene" do
+      punto = Fabrica.punto_atencion()
+
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona_con_sectores(), "X99", punto)
+      assert {:error, :no_encontrado} = Zona.agregar_punto(Fabrica.zona(), "S1", punto)
+    end
+
+    test "rechaza el código de un punto en lugar del de un sector" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+      {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", punto)
+
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, "P1", punto)
+    end
+
+    test "rechaza un código de sector que no es texto o no coincide exactamente" do
+      punto = Fabrica.punto_atencion()
+      zona = zona_con_sectores()
+
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, nil, punto)
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, :S1, punto)
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, "s1", punto)
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, " S1 ", punto)
+    end
+
+    test "rechaza un punto con un código que el sector ya tiene" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+      otro_con_mismo_codigo = Fabrica.punto_atencion(codigo: "P1", nombre: "Otro nombre")
+
+      assert {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", punto)
+      assert {:error, :id_duplicado} = Zona.agregar_punto(zona, "S1", otro_con_mismo_codigo)
+    end
+
+    test "rechaza algo que no es un punto de atención" do
+      zona = zona_con_sectores()
+
+      assert {:error, :punto_invalido} = Zona.agregar_punto(zona, "S1", nil)
+      assert {:error, :punto_invalido} = Zona.agregar_punto(zona, "S1", "P1")
+      assert {:error, :punto_invalido} = Zona.agregar_punto(zona, "S1", Fabrica.sector())
+    end
+
+    test "si el sector no existe gana :no_encontrado sobre :punto_invalido" do
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona_con_sectores(), "X99", nil)
+    end
+
+    test "la zona original no cambia después de un intento fallido" do
+      punto = Fabrica.punto_atencion(codigo: "P1")
+      {:ok, zona} = Zona.agregar_punto(zona_con_sectores(), "S1", punto)
+      copia = zona
+
+      assert {:error, :id_duplicado} = Zona.agregar_punto(zona, "S1", punto)
+      assert {:error, :no_encontrado} = Zona.agregar_punto(zona, "X99", punto)
+      assert {:error, :punto_invalido} = Zona.agregar_punto(zona, "S1", nil)
+      assert zona == copia
     end
   end
 
