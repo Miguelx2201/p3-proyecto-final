@@ -377,7 +377,7 @@ defmodule Emergencias.PersistenciaTest do
         CSV.ruta("historial_personas.csv"),
         Persona.cabecera_historial_csv(),
         {"9999", %{fecha: "2026-01-01T00:00:00Z", de: nil, a: :reportada, usuario: "x"}},
-        &Persona.historial_a_linea/1
+        &Persona.historial_to_linea/1
       )
 
       assert {:ok, [^marta]} = Persistencia.cargar_personas()
