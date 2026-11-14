@@ -16,6 +16,7 @@ defmodule Emergencias.Fabrica do
     Albergue,
     Mascota,
     Movimiento,
+    Mensaje,
     Necesidad,
     Persona,
     PuntoAtencion,
