@@ -308,8 +308,8 @@ defmodule Emergencias.Dominio.Necesidad do
   Convierte la necesidad en una línea CSV (sin salto de línea). `asociada_a`
   se escribe como `zona:centro`, `albergue:A01` o `persona:123`.
   """
-  @spec a_linea(t()) :: String.t()
-  def a_linea(%__MODULE__{} = necesidad) do
+  @spec to_linea(t()) :: String.t()
+  def to_linea(%__MODULE__{} = necesidad) do
     CSV.unir([
       necesidad.id,
       necesidad.tipo,

@@ -105,7 +105,6 @@ defmodule Emergencias.Dominio.Mensaje do
 
   def para_destinatario(_mensajes, _documento), do: []
 
-
   # ---------------------------------------------------------------------------
   # CSV: mensajes.csv
   # ---------------------------------------------------------------------------
@@ -119,7 +118,7 @@ defmodule Emergencias.Dominio.Mensaje do
   @doc """
   Línea de `mensajes.csv`: `id;fecha;remitente;documento;contenido;estado`.
   """
-  def a_linea(%__MODULE__{} = mensaje) do
+  def to_linea(%__MODULE__{} = mensaje) do
     CSV.unir([
       Util.sanitizar_texto(mensaje.id),
       mensaje.fecha,
@@ -182,6 +181,4 @@ defmodule Emergencias.Dominio.Mensaje do
       {:error, _razon} -> {:error, :estado_invalido}
     end
   end
-
-
 end

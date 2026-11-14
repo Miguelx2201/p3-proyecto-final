@@ -281,7 +281,7 @@ defmodule Emergencias.Dominio.PersonaTest do
 
     test "convierte a línea y de vuelta a persona (sin historial)" do
       {:ok, persona} = crear_valida()
-      linea = Persona.a_linea(persona)
+      linea = Persona.to_linea(persona)
 
       assert linea == "1094;Andrés;30;centro;localizada"
       assert {:ok, leida} = Persona.de_linea(linea)
@@ -290,7 +290,7 @@ defmodule Emergencias.Dominio.PersonaTest do
 
     test "sanitiza los textos al escribir la línea" do
       persona = Fabrica.persona(nombre: "Ana;María\nPérez")
-      assert Persona.a_linea(persona) == "1094;Ana María Pérez;30;centro;localizada"
+      assert Persona.to_linea(persona) == "1094;Ana María Pérez;30;centro;localizada"
     end
 
     test "rechaza líneas corruptas" do
@@ -368,7 +368,7 @@ defmodule Emergencias.Dominio.PersonaTest do
       ruta_personas = Path.join(dir, Persona.archivo_csv())
       ruta_historial = Path.join(dir, Persona.archivo_historial_csv())
 
-      :ok = CSV.escribir(ruta_personas, Persona.cabecera_csv(), [persona], &Persona.a_linea/1)
+      :ok = CSV.escribir(ruta_personas, Persona.cabecera_csv(), [persona], &Persona.to_linea/1)
 
       [inicial, cambio] = Persona.filas_historial(persona)
       historial_csv = Persona.cabecera_historial_csv()

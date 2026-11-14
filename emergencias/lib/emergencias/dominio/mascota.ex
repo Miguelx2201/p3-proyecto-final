@@ -165,7 +165,7 @@ defmodule Emergencias.Dominio.Mascota do
   Convierte la mascota en una línea CSV. Un `nombre` desconocido (`nil`) se
   guarda como campo vacío.
   """
-  def a_linea(%__MODULE__{} = mascota) do
+  def to_linea(%__MODULE__{} = mascota) do
     CSV.unir([
       Util.sanitizar_texto(mascota.id),
       Atom.to_string(mascota.tipo),

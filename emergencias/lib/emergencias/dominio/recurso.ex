@@ -113,7 +113,7 @@ defmodule Emergencias.Dominio.Recurso do
   Convierte el recurso en una línea de `recursos.csv`
   (`id;nombre;categoria;cantidad;unidad;ubicacion;zona`).
   """
-  def a_linea(%__MODULE__{} = recurso) do
+  def to_linea(%__MODULE__{} = recurso) do
     CSV.unir([
       Util.sanitizar_texto(recurso.id),
       Util.sanitizar_texto(recurso.nombre),

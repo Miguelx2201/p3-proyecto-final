@@ -151,7 +151,7 @@ defmodule Emergencias.Dominio.MensajeTest do
 
     test "convierte a línea y de vuelta a mensaje" do
       mensaje = Fabrica.mensaje()
-      linea = Mensaje.a_linea(mensaje)
+      linea = Mensaje.to_linea(mensaje)
 
       assert linea ==
                "MS001;2026-01-01T00:00:00Z;laura;1094;Estamos bien, te esperamos en el albergue;pendiente"
@@ -159,13 +159,13 @@ defmodule Emergencias.Dominio.MensajeTest do
       assert {:ok, ^mensaje} = Mensaje.de_linea(linea)
 
       {:ok, entregado} = Mensaje.marcar_entregado(mensaje)
-      assert {:ok, ^entregado} = Mensaje.de_linea(Mensaje.a_linea(entregado))
+      assert {:ok, ^entregado} = Mensaje.de_linea(Mensaje.to_linea(entregado))
     end
 
     test "sanitiza el contenido al escribir la línea" do
       mensaje = Fabrica.mensaje(contenido: "hola;\nmamá")
 
-      assert Mensaje.a_linea(mensaje) ==
+      assert Mensaje.to_linea(mensaje) ==
                "MS001;2026-01-01T00:00:00Z;laura;1094;hola  mamá;pendiente"
     end
 
@@ -195,7 +195,7 @@ defmodule Emergencias.Dominio.MensajeTest do
       {:ok, entregado} = Mensaje.marcar_entregado(Fabrica.mensaje(id: "MS002"))
       mensajes = [Fabrica.mensaje(), entregado]
 
-      :ok = CSV.escribir(ruta, Mensaje.cabecera_csv(), mensajes, &Mensaje.a_linea/1)
+      :ok = CSV.escribir(ruta, Mensaje.cabecera_csv(), mensajes, &Mensaje.to_linea/1)
 
       assert {:ok, ^mensajes} = CSV.leer(ruta, &Mensaje.de_linea/1)
     end
