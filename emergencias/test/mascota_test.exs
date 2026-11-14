@@ -261,7 +261,9 @@ defmodule Emergencias.Dominio.MascotaTest do
     test "una línea corrupta en el archivo se reporta con su número", %{tmp_dir: tmp_dir} do
       ruta = Path.join(tmp_dir, Mascota.archivo())
 
-      contenido = Mascota.cabecera() <> "\n" <> Mascota.to_linea(Fabrica.mascota()) <> "\nbasura\n"
+      contenido =
+        Mascota.cabecera() <> "\n" <> Mascota.to_linea(Fabrica.mascota()) <> "\nbasura\n"
+
       assert :ok = File.write(ruta, contenido)
 
       assert {:error, {:linea_invalida, 3}} = CSV.leer(ruta, &Mascota.de_linea/1)
