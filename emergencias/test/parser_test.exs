@@ -114,9 +114,14 @@ defmodule Emergencias.CLI.ParserTest do
                {:error, {:valor_invalido, :tipo}}
     end
 
-    test "texto vacío es inválido" do
-      assert Parser.parsear("send_family_message 123 \"\"") ==
+    test "texto que queda vacío al sanitizar es inválido" do
+      assert Parser.parsear("send_family_message 123 \";\"") ==
                {:error, {:valor_invalido, :mensaje}}
+    end
+
+    test "unas comillas vacías no cuentan como argumento (OptionParser las descarta)" do
+      assert Parser.parsear("send_family_message 123 \"\"") ==
+               {:error, {:argumentos, esperados: 2}}
     end
 
     test "informa el primer argumento inválido" do
