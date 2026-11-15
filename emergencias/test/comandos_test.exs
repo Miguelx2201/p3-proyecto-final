@@ -423,7 +423,9 @@ defmodule Emergencias.CLI.ComandosTest do
       baja = necesidad(c, :agua, 5, :baja)
       critica = necesidad(c, otra_categoria(), 5, :critica)
       cancelada = necesidad(c, otra_categoria(), 5, :alta)
-      assert {:ok, %Necesidad{estado: :cancelada}} = Comandos.ejecutar(c, :cancel_need, [cancelada])
+
+      assert {:ok, %Necesidad{estado: :cancelada}} =
+               Comandos.ejecutar(c, :cancel_need, [cancelada])
 
       assert {:ok, [primera, segunda]} = Comandos.ejecutar(c, :pending_needs, [])
       assert primera.id == critica
