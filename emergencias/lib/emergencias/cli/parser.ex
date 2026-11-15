@@ -19,14 +19,23 @@ defmodule Emergencias.CLI.Parser do
       `tipo_otro`).
     * `:prioridad` y `:nivel`: enumeraciones que aceptan `critica` y `critico`
       indistintamente.
-    * `:tipo_usuario`, `:estado_necesidad`, `:estado_persona` y `:tamano`:
-      enumeraciones (`Emergencias.Util.parsear_enum/2`).
+    * `:tipo_usuario`, `:estado_necesidad`, `:estado_persona`, `:estado_mascota`
+      y `:tamano`: enumeraciones (`Emergencias.Util.parsear_enum/2`).
+    * `:tipo_mascota`: `lost` o `perdida` dan `:perdida`; `found` o `encontrada`
+      dan `:encontrada`.
+
+  ## Argumentos opcionales
+
+  Algunos comandos admiten argumentos opcionales al final (`report_pet`,
+  `register_resource`, `register_shelter` y `shelter_report`). Y `find_person`
+  acepta un único documento o filtros `clave=valor`.
 
   ## Errores
 
     * `{:error, :linea_vacia}`
     * `{:error, :comando_desconocido}`
-    * `{:error, {:argumentos, esperados: n}}`
+    * `{:error, {:argumentos, esperados: n}}` (en los comandos con argumentos
+      opcionales, `n` es la cantidad mínima)
     * `{:error, {:valor_invalido, nombre_argumento}}`
     * `{:error, {:filtro_invalido, clave}}`
   """
@@ -40,7 +49,15 @@ defmodule Emergencias.CLI.Parser do
     prioridad: [:critica, :alta, :media, :baja],
     categoria: [:agua, :alimentos, :medicinas, :ropa, :refugio],
     estado_necesidad: [:pendiente, :en_proceso, :atendida, :cancelada],
-    estado_persona: [:localizada, :desaparecida, :albergada],
+    estado_persona: [
+      :sin_informacion,
+      :reportada,
+      :localizada,
+      :trasladada,
+      :en_albergue,
+      :reunificada
+    ],
+    estado_mascota: [:activa, :posible_coincidencia, :resuelta],
     tamano: [:pequeno, :mediano, :grande]
   }
 
@@ -49,6 +66,9 @@ defmodule Emergencias.CLI.Parser do
   #   * Lista de `{nombre_argumento, tipo}`: argumentos posicionales.
   #   * `{:filtros, [{clave, tipo}]}`: filtros `clave=valor`; las claves de la
   #     lista son las únicas permitidas.
+  #   * `{:opcionales, requeridos, opcionales}`: argumentos posicionales; los
+  #     opcionales van al final y pueden omitirse.
+  #   * `{:documento_o_filtros, [{clave, tipo}]}`: un único documento o filtros.
   @comandos %{
     "help" => {:help, []},
     "exit" => {:exit, []},
@@ -75,10 +95,61 @@ defmodule Emergencias.CLI.Parser do
          tipo: :tipo_necesidad,
          cantidad: :entero,
          prioridad: :prioridad,
-         descripcion: :texto,
-         zona: :texto
+         zona: :texto,
+         descripcion: :texto
        ]},
+    "pending_needs" => {:pending_needs, []},
+    "set_need_status" => {:set_need_status, [id: :texto, estado: :estado_necesidad]},
+    "cancel_need" => {:cancel_need, [id: :texto]},
+    "assign_resource" =>
+      {:assign_resource, [id: :texto, categoria: :categoria, cantidad: :entero]},
+    "register_resource" =>
+      {:register_resource,
+       {:opcionales,
+        [id: :texto, categoria: :categoria, cantidad: :entero, unidad: :texto, ubicacion: :texto],
+        [zona: :texto]}},
+    "add_stock" => {:add_stock, [id: :texto, cantidad: :entero]},
+    "remove_stock" => {:remove_stock, [id: :texto, cantidad: :entero]},
+    "transfer_resource" =>
+      {:transfer_resource,
+       [id: :texto, centro_origen: :texto, centro_destino: :texto, cantidad: :entero]},
+    "critical_resources" => {:critical_resources, []},
+    "report_person" =>
+      {:report_person,
+       [
+         documento: :texto,
+         nombre: :texto,
+         edad: :entero,
+         zona: :texto,
+         estado: :estado_persona
+       ]},
+    "set_person_state" => {:set_person_state, [documento: :texto, estado: :estado_persona]},
     "send_family_message" => {:send_family_message, [documento: :texto, mensaje: :texto]},
+    "list_family_messages" => {:list_family_messages, [documento: :texto]},
+    "mark_message_delivered" => {:mark_message_delivered, [id: :texto]},
+    "report_pet" =>
+      {:report_pet,
+       {:opcionales,
+        [
+          tipo: :tipo_mascota,
+          especie: :texto,
+          nombre: :texto,
+          color: :texto,
+          tamano: :tamano,
+          zona: :texto,
+          contacto: :texto
+        ], [caracteristicas: :texto]}},
+    "match_pets" => {:match_pets, []},
+    "confirm_pet_match" => {:confirm_pet_match, [id_perdida: :texto, id_encontrada: :texto]},
+    "register_shelter" =>
+      {:register_shelter,
+       {:opcionales, [codigo: :texto, nombre: :texto, zona: :texto, capacidad: :entero],
+        [ocupacion: :entero]}},
+    "check_shelter" => {:check_shelter, [codigo: :texto]},
+    "register_entry" => {:register_entry, [codigo: :texto, documento: :texto]},
+    "register_exit" => {:register_exit, [codigo: :texto, documento: :texto]},
+    "shelter_report" => {:shelter_report, {:opcionales, [], [n: :entero]}},
+    "summary" => {:summary, []},
     "list_needs" =>
       {:list_needs,
        {:filtros,
@@ -90,10 +161,10 @@ defmodule Emergencias.CLI.Parser do
         ]}},
     "list_resources" => {:list_resources, {:filtros, [zona: :texto, categoria: :categoria]}},
     "list_pets" =>
-      {:list_pets,
-       {:filtros, [zona: :texto, especie: :texto, color: :texto, tamano: :tamano]}},
+      {:list_pets, {:filtros, [zona: :texto, especie: :texto, estado: :estado_mascota]}},
     "find_person" =>
-      {:find_person, {:filtros, [nombre: :texto, zona: :texto, estado: :estado_persona]}}
+      {:find_person,
+       {:documento_o_filtros, [nombre: :texto, zona: :texto, estado: :estado_persona]}}
   }
 
   @doc """
@@ -123,21 +194,55 @@ defmodule Emergencias.CLI.Parser do
           {:ok, {comando, filtros}}
         end
 
+      {:ok, {comando, {:documento_o_filtros, permitidos}}} ->
+        parsear_documento_o_filtros(comando, tokens, permitidos)
+
+      {:ok, {comando, {:opcionales, requeridos, opcionales}}} ->
+        parsear_argumentos(comando, requeridos, opcionales, tokens)
+
       {:ok, {comando, esperados}} ->
-        parsear_argumentos(comando, esperados, tokens)
+        parsear_argumentos(comando, esperados, [], tokens)
 
       :error ->
         {:error, :comando_desconocido}
     end
   end
 
-  defp parsear_argumentos(comando, esperados, tokens) do
-    if length(tokens) == length(esperados) do
+  # Con opcionales se acepta de `length(requeridos)` a `length(requeridos ++ opcionales)`
+  # tokens; el error informa la cantidad mínima.
+  defp parsear_argumentos(comando, requeridos, opcionales, tokens) do
+    minimo = length(requeridos)
+    maximo = minimo + length(opcionales)
+
+    if length(tokens) in minimo..maximo//1 do
+      esperados = Enum.take(requeridos ++ opcionales, length(tokens))
+
       with {:ok, valores} <- convertir_argumentos(esperados, tokens, []) do
         {:ok, {comando, valores}}
       end
     else
-      {:error, {:argumentos, esperados: length(esperados)}}
+      {:error, {:argumentos, esperados: minimo}}
+    end
+  end
+
+  # Un único token sin `=` es un documento; en cualquier otro caso son filtros.
+  defp parsear_documento_o_filtros(comando, [token], permitidos) do
+    if String.contains?(token, "=") do
+      parsear_filtros_de(comando, [token], permitidos)
+    else
+      case convertir(token, :texto) do
+        {:ok, documento} -> {:ok, {comando, [documento]}}
+        {:error, _razon} -> {:error, {:valor_invalido, :documento}}
+      end
+    end
+  end
+
+  defp parsear_documento_o_filtros(comando, tokens, permitidos),
+    do: parsear_filtros_de(comando, tokens, permitidos)
+
+  defp parsear_filtros_de(comando, tokens, permitidos) do
+    with {:ok, filtros} <- parsear_filtros(tokens, permitidos) do
+      {:ok, {comando, filtros}}
     end
   end
 
@@ -241,6 +346,14 @@ defmodule Emergencias.CLI.Parser do
     case String.split(texto, ":", parts: 2) do
       [prefijo, detalle] -> convertir_otra(prefijo, detalle)
       [_sin_dos_puntos] -> Util.parsear_enum(texto, @enumeraciones.categoria)
+    end
+  end
+
+  def convertir(texto, :tipo_mascota) do
+    case texto |> String.trim() |> String.downcase() do
+      palabra when palabra in ["lost", "perdida"] -> {:ok, :perdida}
+      palabra when palabra in ["found", "encontrada"] -> {:ok, :encontrada}
+      _otra -> {:error, :valor_invalido}
     end
   end
 
