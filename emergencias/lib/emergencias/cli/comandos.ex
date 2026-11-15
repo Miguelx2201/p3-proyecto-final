@@ -7,6 +7,7 @@ defmodule Emergencias.CLI.Comandos do
     * `sesion`: `nil` (nadie conectado) o el `Usuario` conectado.
     * `comando`: átomo del comando (por ejemplo `:register_zone`).
     * `argumentos`: lista de valores **ya convertidos** por `Emergencias.CLI.Parser`.
+      En los comandos con filtros es la keyword list de filtros.
 
   Devuelve lo mismo que la fachada: `:ok`, `{:ok, valor}` o `{:error, razon}`.
   Ninguna función lanza excepciones.
@@ -20,10 +21,27 @@ defmodule Emergencias.CLI.Comandos do
     * `:register_point` - `[zona, sector, codigo, nombre, personas]`
     * `:zone_status` - `[zona]`
     * `:zone_stats` - `[zona]`
+    * `:register_need` - `[tipo, cantidad, prioridad, zona, descripcion]`
+    * `:list_needs` - filtros opcionales `zona:`, `tipo:`, `prioridad:`, `estado:`
+    * `:pending_needs` - `[]`
+    * `:set_need_status` - `[id, estado]`
+    * `:cancel_need` - `[id]`
+    * `:assign_resource` - `[id_necesidad, categoria, cantidad]`
+    * `:register_resource` - `[id, categoria, cantidad, unidad, ubicacion]` o
+      `[id, categoria, cantidad, unidad, ubicacion, zona]` (sin zona se usa la
+      zona principal del usuario)
+    * `:list_resources` - filtros opcionales `categoria:`, `zona:`
+    * `:add_stock` - `[id, cantidad]`
+    * `:remove_stock` - `[id, cantidad]`
+    * `:transfer_resource` - `[id, centro_origen, centro_destino, cantidad]`
+    * `:critical_resources` - `[]`
 
   ## Errores propios
 
-    * `{:error, {:argumentos, esperados: n}}`: cantidad de argumentos incorrecta.
+    * `{:error, {:argumentos, esperados: n}}`: cantidad de argumentos incorrecta
+      (en `:register_resource`, que admite 5 o 6, `n` es el mínimo: 5).
+    * `{:error, :valor_invalido}`: los argumentos no son una lista, o los filtros
+      de un comando con filtros no son una keyword list.
     * `{:error, :no_conectado}`: comando que exige sesión y `sesion` es `nil`.
     * `{:error, :ya_conectado}`: `connect` con una sesión ya iniciada.
     * `{:error, :no_implementado}`: comando que todavía no tiene cláusula aquí.
@@ -31,7 +49,11 @@ defmodule Emergencias.CLI.Comandos do
 
   alias Emergencias.Dominio.Usuario
 
-  # Comando => cantidad de argumentos que espera.
+  # Comando => argumentos que espera:
+  #
+  #   * entero: cantidad exacta de argumentos posicionales;
+  #   * rango: cantidad mínima..máxima (argumentos opcionales al final);
+  #   * `:filtros`: una keyword list (puede estar vacía).
   @aridad %{
     connect: 4,
     disconnect: 0,
@@ -39,17 +61,33 @@ defmodule Emergencias.CLI.Comandos do
     register_sector: 4,
     register_point: 5,
     zone_status: 1,
-    zone_stats: 1
+    zone_stats: 1,
+    register_need: 5,
+    list_needs: :filtros,
+    pending_needs: 0,
+    set_need_status: 2,
+    cancel_need: 1,
+    assign_resource: 3,
+    register_resource: 5..6,
+    list_resources: :filtros,
+    add_stock: 2,
+    remove_stock: 2,
+    transfer_resource: 4,
+    critical_resources: 0
   }
 
   @doc "Ejecuta `comando` con `argumentos` en nombre de `sesion`."
   def ejecutar(sesion, comando, argumentos) when is_list(argumentos) do
     case Map.fetch(@aridad, comando) do
-      {:ok, esperados} when length(argumentos) == esperados ->
-        despachar(sesion, comando, argumentos)
+      {:ok, :filtros} ->
+        if Keyword.keyword?(argumentos),
+          do: despachar(sesion, comando, argumentos),
+          else: {:error, :valor_invalido}
 
       {:ok, esperados} ->
-        {:error, {:argumentos, esperados: esperados}}
+        if cantidad_valida?(length(argumentos), esperados),
+          do: despachar(sesion, comando, argumentos),
+          else: {:error, {:argumentos, esperados: minimo(esperados)}}
 
       :error ->
         {:error, :no_implementado}
@@ -57,6 +95,14 @@ defmodule Emergencias.CLI.Comandos do
   end
 
   def ejecutar(_sesion, _comando, _argumentos), do: {:error, :valor_invalido}
+
+  defp cantidad_valida?(cantidad, esperados) when is_integer(esperados),
+    do: cantidad == esperados
+
+  defp cantidad_valida?(cantidad, %Range{} = esperados), do: cantidad in esperados
+
+  defp minimo(esperados) when is_integer(esperados), do: esperados
+  defp minimo(%Range{first: primero}), do: primero
 
   # --- sesión ----------------------------------------------------------------
 
@@ -86,6 +132,82 @@ defmodule Emergencias.CLI.Comandos do
 
   defp despachar(%Usuario{} = usuario, :zone_stats, [zona]),
     do: Emergencias.zone_stats(usuario, zona)
+
+  # --- necesidades -----------------------------------------------------------
+
+  defp despachar(%Usuario{} = usuario, :register_need, [
+         tipo,
+         cantidad,
+         prioridad,
+         zona,
+         descripcion
+       ]),
+       do: Emergencias.register_need(usuario, tipo, cantidad, prioridad, zona, descripcion)
+
+  defp despachar(%Usuario{} = usuario, :list_needs, filtros),
+    do: Emergencias.list_needs(usuario, filtros)
+
+  defp despachar(%Usuario{} = usuario, :pending_needs, []),
+    do: Emergencias.pending_needs(usuario)
+
+  defp despachar(%Usuario{} = usuario, :set_need_status, [id, estado]),
+    do: Emergencias.set_need_status(usuario, id, estado)
+
+  defp despachar(%Usuario{} = usuario, :cancel_need, [id]),
+    do: Emergencias.cancel_need(usuario, id)
+
+  defp despachar(%Usuario{} = usuario, :assign_resource, [id, categoria, cantidad]),
+    do: Emergencias.assign_resource(usuario, id, categoria, cantidad)
+
+  # --- recursos --------------------------------------------------------------
+
+  defp despachar(%Usuario{} = usuario, :register_resource, [
+         id,
+         categoria,
+         cantidad,
+         unidad,
+         ubicacion
+       ]),
+       do: Emergencias.register_resource(usuario, id, categoria, cantidad, unidad, ubicacion)
+
+  defp despachar(%Usuario{} = usuario, :register_resource, [
+         id,
+         categoria,
+         cantidad,
+         unidad,
+         ubicacion,
+         zona
+       ]),
+       do:
+         Emergencias.register_resource(
+           usuario,
+           id,
+           categoria,
+           cantidad,
+           unidad,
+           ubicacion,
+           zona
+         )
+
+  defp despachar(%Usuario{} = usuario, :list_resources, filtros),
+    do: Emergencias.list_resources(usuario, filtros)
+
+  defp despachar(%Usuario{} = usuario, :add_stock, [id, cantidad]),
+    do: Emergencias.add_stock(usuario, id, cantidad)
+
+  defp despachar(%Usuario{} = usuario, :remove_stock, [id, cantidad]),
+    do: Emergencias.remove_stock(usuario, id, cantidad)
+
+  defp despachar(%Usuario{} = usuario, :transfer_resource, [
+         id,
+         centro_origen,
+         centro_destino,
+         cantidad
+       ]),
+       do: Emergencias.transfer_resource(usuario, id, centro_origen, centro_destino, cantidad)
+
+  defp despachar(%Usuario{} = usuario, :critical_resources, []),
+    do: Emergencias.critical_resources(usuario)
 
   defp despachar(_otra_sesion, _comando, _argumentos), do: {:error, :usuario_invalido}
 end
