@@ -101,4 +101,24 @@ defmodule Emergencias.Dominio.Sector do
   end
 
   def de_linea(_otro), do: {:error, :linea_invalida}
+
+  @doc """
+  Representación legible del sector, pensada para mostrar en consola.
+
+  Muestra las personas propias del sector y cuántos puntos de atención tiene.
+
+      iex> {:ok, s} = Emergencias.Dominio.Sector.crear("S01", "Norte", 40)
+      iex> Emergencias.Dominio.Sector.to_string(s)
+      "Sector S01 - Norte | Personas afectadas: 40 | Puntos de atención: 0"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = sector) do
+    "Sector #{sector.codigo} - #{sector.nombre} | " <>
+      "Personas afectadas: #{sector.personas_afectadas} | " <>
+      "Puntos de atención: #{length(sector.puntos_atencion)}"
+  end
+
+  defimpl String.Chars do
+    def to_string(sector), do: Emergencias.Dominio.Sector.to_string(sector)
+  end
 end

@@ -209,4 +209,40 @@ defmodule Emergencias.Dominio.Mascota do
       {:error, _} -> {:error, razon}
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # Representación en texto
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Representación legible del reporte de mascota, pensada para mostrar en consola.
+
+  Un `nombre` en `nil` se muestra como `desconocido` y unas `caracteristicas`
+  vacías como `sin características`.
+
+      iex> {:ok, m} = Emergencias.Dominio.Mascota.crear("M001", :perdida, "perro", nil, "", "negra", :mediano, "centro", "300")
+      iex> Emergencias.Dominio.Mascota.to_string(m)
+      "Mascota M001 [perdida] | perro 'desconocido', negra, mediano | Características: sin características | Zona: centro | Contacto: 300 | Estado: activa"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = mascota) do
+    caracteristicas =
+      if Util.vacio?(mascota.caracteristicas),
+        do: "sin características",
+        else: mascota.caracteristicas
+
+    "Mascota #{mascota.id} [#{texto_atomo(mascota.tipo)}] | " <>
+      "#{mascota.especie} '#{mascota.nombre || "desconocido"}', " <>
+      "#{mascota.color}, #{texto_atomo(mascota.tamano)} | " <>
+      "Características: #{caracteristicas} | " <>
+      "Zona: #{mascota.zona} | " <>
+      "Contacto: #{mascota.contacto} | " <>
+      "Estado: #{texto_atomo(mascota.estado)}"
+  end
+
+  defimpl String.Chars do
+    def to_string(mascota), do: Emergencias.Dominio.Mascota.to_string(mascota)
+  end
+
+  defp texto_atomo(atomo), do: atomo |> Atom.to_string() |> String.replace("_", " ")
 end

@@ -158,4 +158,26 @@ defmodule Emergencias.Dominio.Recurso do
     do: {:ok, cantidad}
 
   defp validar_cantidad_inicial(_otra), do: {:error, :cantidad_invalida}
+
+  @doc """
+  Representación legible del recurso, pensada para mostrar en consola.
+
+      iex> {:ok, r} = Emergencias.Dominio.Recurso.crear("R01", "Agua embotellada", :agua, 200, "litros", "Bodega 1", "centro")
+      iex> Emergencias.Dominio.Recurso.to_string(r)
+      "Recurso R01 - Agua embotellada | Categoría: agua | Disponible: 200 litros | Ubicación: Bodega 1 | Zona: centro"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = recurso) do
+    "Recurso #{recurso.id} - #{recurso.nombre} | " <>
+      "Categoría: #{texto_atomo(recurso.categoria)} | " <>
+      "Disponible: #{recurso.cantidad_disponible} #{recurso.unidad} | " <>
+      "Ubicación: #{recurso.ubicacion} | " <>
+      "Zona: #{recurso.zona}"
+  end
+
+  defimpl String.Chars do
+    def to_string(recurso), do: Emergencias.Dominio.Recurso.to_string(recurso)
+  end
+
+  defp texto_atomo(atomo), do: atomo |> Atom.to_string() |> String.replace("_", " ")
 end

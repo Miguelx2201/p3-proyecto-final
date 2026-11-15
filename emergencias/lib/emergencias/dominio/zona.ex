@@ -313,4 +313,30 @@ defmodule Emergencias.Dominio.Zona do
   end
 
   def de_linea(_otro), do: {:error, :linea_invalida}
+
+  @doc """
+  Representación legible de la zona, pensada para mostrar en consola.
+
+  Muestra la estimación de la zona (`personas_afectadas`) y, por separado, el
+  total contado en sus sectores y puntos (`total_personas/1`).
+
+      iex> {:ok, z} = Emergencias.Dominio.Zona.crear("centro", "Centro", :critico, 500)
+      iex> Emergencias.Dominio.Zona.to_string(z)
+      "Zona centro - Centro | Nivel: crítico | Personas afectadas (estimadas): 500 | Personas contadas: 0 | Sectores: 0"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = zona) do
+    "Zona #{zona.codigo} - #{zona.nombre} | " <>
+      "Nivel: #{nivel_a_texto(zona.nivel)} | " <>
+      "Personas afectadas (estimadas): #{zona.personas_afectadas} | " <>
+      "Personas contadas: #{total_personas(zona)} | " <>
+      "Sectores: #{length(zona.sectores)}"
+  end
+
+  defimpl String.Chars do
+    def to_string(zona), do: Emergencias.Dominio.Zona.to_string(zona)
+  end
+
+  defp nivel_a_texto(:critico), do: "crítico"
+  defp nivel_a_texto(nivel), do: Atom.to_string(nivel)
 end

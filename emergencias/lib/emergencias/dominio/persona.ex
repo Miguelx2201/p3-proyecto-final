@@ -321,4 +321,32 @@ defmodule Emergencias.Dominio.Persona do
 
   defp estado_a_texto(nil), do: ""
   defp estado_a_texto(estado), do: Atom.to_string(estado)
+
+  # ---------------------------------------------------------------------------
+  # Representación en texto
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Representación legible de la persona, pensada para mostrar en consola.
+
+  Incluye el número de cambios de estado registrados en el historial.
+
+      iex> {:ok, p} = Emergencias.Dominio.Persona.crear("1094", "Andrés", 30, "centro", :localizada, "laura")
+      iex> Emergencias.Dominio.Persona.to_string(p)
+      "Persona 1094 - Andrés | Edad: 30 | Zona: centro | Estado: localizada | Cambios de estado: 1"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = persona) do
+    "Persona #{persona.documento} - #{persona.nombre} | " <>
+      "Edad: #{persona.edad} | " <>
+      "Zona: #{persona.zona} | " <>
+      "Estado: #{estado_a_legible(persona.estado)} | " <>
+      "Cambios de estado: #{length(persona.historial)}"
+  end
+
+  defimpl String.Chars do
+    def to_string(persona), do: Emergencias.Dominio.Persona.to_string(persona)
+  end
+
+  defp estado_a_legible(estado), do: estado |> Atom.to_string() |> String.replace("_", " ")
 end
