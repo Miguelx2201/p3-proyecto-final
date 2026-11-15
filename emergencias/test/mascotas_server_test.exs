@@ -301,7 +301,8 @@ defmodule Emergencias.Procesos.MascotasServerTest do
     end
 
     test "tipos inválidos", %{pid: pid} do
-      assert {:error, :tipos_invalidos} = MascotasServer.confirmar_coincidencia(pid, "M002", "M001")
+      assert {:error, :tipos_invalidos} =
+               MascotasServer.confirmar_coincidencia(pid, "M002", "M001")
     end
 
     test "ya resuelta devuelve error", %{pid: pid} do

@@ -108,6 +108,7 @@ defmodule Emergencias.Procesos.PersonasServerTest do
 
     test "una persona inválida no queda registrada" do
       iniciar()
+
       assert {:error, :nombre_vacio} =
                PersonasServer.reportar("1094", "", 30, "centro", :reportada, "laura")
 
