@@ -145,4 +145,31 @@ defmodule Emergencias.Dominio.Movimiento do
       {:error, _razon} -> {:error, :fecha_invalida}
     end
   end
+
+  @doc """
+  Representación legible del movimiento, pensada para mostrar en consola.
+
+  Un `id` en `nil` (movimiento aún no guardado) se muestra como `sin asignar` y
+  una `referencia` en `nil` como `ninguna`.
+
+      iex> {:ok, m} = Emergencias.Dominio.Movimiento.nuevo("R01", :entrada, 10, "laura", nil)
+      iex> Emergencias.Dominio.Movimiento.to_string(m) =~ "Movimiento sin asignar | Recurso: R01 | Tipo: entrada | Cantidad: 10"
+      true
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = movimiento) do
+    "Movimiento #{movimiento.id || "sin asignar"} | " <>
+      "Recurso: #{movimiento.recurso_id} | " <>
+      "Tipo: #{texto_atomo(movimiento.tipo)} | " <>
+      "Cantidad: #{movimiento.cantidad} | " <>
+      "Fecha: #{movimiento.fecha} | " <>
+      "Usuario: #{movimiento.usuario} | " <>
+      "Referencia: #{movimiento.referencia || "ninguna"}"
+  end
+
+  defimpl String.Chars do
+    def to_string(movimiento), do: Emergencias.Dominio.Movimiento.to_string(movimiento)
+  end
+
+  defp texto_atomo(atomo), do: atomo |> Atom.to_string() |> String.replace("_", " ")
 end

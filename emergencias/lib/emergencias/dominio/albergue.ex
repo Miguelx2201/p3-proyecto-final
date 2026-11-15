@@ -180,4 +180,30 @@ defmodule Emergencias.Dominio.Albergue do
       do: :ok,
       else: {:error, :persona_no_esta}
   end
+
+  # ---------------------------------------------------------------------------
+  # Representación en texto
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Representación legible del albergue, pensada para mostrar en consola.
+
+      iex> {:ok, a} = Emergencias.Dominio.Albergue.crear("A01", "Coliseo", "centro", 50, 20)
+      iex> Emergencias.Dominio.Albergue.to_string(a)
+      "Albergue A01 - Coliseo | Zona: centro | Ocupación: 20/50 (40.0%) | Cupos disponibles: 30 | Personas registradas: 0"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = albergue) do
+    porcentaje = albergue |> porcentaje_ocupacion() |> Float.round(1)
+
+    "Albergue #{albergue.id} - #{albergue.nombre} | " <>
+      "Zona: #{albergue.zona} | " <>
+      "Ocupación: #{albergue.ocupacion_actual}/#{albergue.capacidad_maxima} (#{porcentaje}%) | " <>
+      "Cupos disponibles: #{cupos_disponibles(albergue)} | " <>
+      "Personas registradas: #{MapSet.size(albergue.personas)}"
+  end
+
+  defimpl String.Chars do
+    def to_string(albergue), do: Emergencias.Dominio.Albergue.to_string(albergue)
+  end
 end

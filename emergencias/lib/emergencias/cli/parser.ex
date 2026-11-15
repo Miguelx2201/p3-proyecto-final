@@ -35,7 +35,7 @@ defmodule Emergencias.CLI.Parser do
 
   # Valores permitidos de cada enumeración (átomos sin tildes ni eñes).
   @enumeraciones %{
-    tipo_usuario: [:coordinador, :voluntario, :ciudadano],
+    tipo_usuario: [:administrador, :coordinador, :voluntario, :ciudadano],
     nivel: [:critico, :alto, :medio, :bajo],
     prioridad: [:critica, :alta, :media, :baja],
     categoria: [:agua, :alimentos, :medicinas, :ropa, :refugio],
@@ -50,6 +50,11 @@ defmodule Emergencias.CLI.Parser do
   #   * `{:filtros, [{clave, tipo}]}`: filtros `clave=valor`; las claves de la
   #     lista son las únicas permitidas.
   @comandos %{
+    "connect" =>
+      {:connect, [usuario: :texto, contrasena: :texto, tipo: :tipo_usuario, zona: :texto]},
+    "disconnect" => {:disconnect, []},
+    "help" => {:help, []},
+    "exit" => {:exit, []},
     "register_need" =>
       {:register_need,
        [
@@ -71,8 +76,7 @@ defmodule Emergencias.CLI.Parser do
         ]}},
     "list_resources" => {:list_resources, {:filtros, [zona: :texto, categoria: :categoria]}},
     "list_pets" =>
-      {:list_pets,
-       {:filtros, [zona: :texto, especie: :texto, color: :texto, tamano: :tamano]}},
+      {:list_pets, {:filtros, [zona: :texto, especie: :texto, color: :texto, tamano: :tamano]}},
     "find_person" =>
       {:find_person, {:filtros, [nombre: :texto, zona: :texto, estado: :estado_persona]}}
   }

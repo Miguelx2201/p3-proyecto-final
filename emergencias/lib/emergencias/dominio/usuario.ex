@@ -143,4 +143,27 @@ defmodule Emergencias.Dominio.Usuario do
 
   defp validar_tipo(tipo) when tipo in @tipos, do: :ok
   defp validar_tipo(_tipo), do: {:error, :tipo_invalido}
+
+  @doc """
+  Representación legible del usuario, pensada para mostrar en consola.
+
+  Nunca incluye la contraseña ni su hash.
+
+      iex> {:ok, u} = Emergencias.Dominio.Usuario.crear("laura", "secreto", "Laura Pérez", :voluntario, "centro")
+      iex> Emergencias.Dominio.Usuario.to_string(u)
+      "Usuario laura - Laura Pérez | Tipo: voluntario | Zona: centro | Sesión: desconectado"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = usuario) do
+    sesion = if usuario.conectado, do: "conectado", else: "desconectado"
+
+    "Usuario #{usuario.username} - #{usuario.nombre_completo} | " <>
+      "Tipo: #{Atom.to_string(usuario.tipo)} | " <>
+      "Zona: #{usuario.zona} | " <>
+      "Sesión: #{sesion}"
+  end
+
+  defimpl String.Chars do
+    def to_string(usuario), do: Emergencias.Dominio.Usuario.to_string(usuario)
+  end
 end

@@ -181,4 +181,29 @@ defmodule Emergencias.Dominio.Mensaje do
       {:error, _razon} -> {:error, :estado_invalido}
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # Representación en texto
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Representación legible del mensaje, pensada para mostrar en consola.
+
+      iex> {:ok, m} = Emergencias.Dominio.Mensaje.crear("MS001", "laura", "1094", "Estamos bien")
+      iex> String.starts_with?(Emergencias.Dominio.Mensaje.to_string(m), "Mensaje MS001 | De: laura | Para (documento): 1094")
+      true
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = mensaje) do
+    "Mensaje #{mensaje.id} | " <>
+      "De: #{mensaje.remitente} | " <>
+      "Para (documento): #{mensaje.documento_destinatario} | " <>
+      "Fecha: #{mensaje.fecha} | " <>
+      "Estado: #{Atom.to_string(mensaje.estado)} | " <>
+      "Contenido: #{mensaje.contenido}"
+  end
+
+  defimpl String.Chars do
+    def to_string(mensaje), do: Emergencias.Dominio.Mensaje.to_string(mensaje)
+  end
 end

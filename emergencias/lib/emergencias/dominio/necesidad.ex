@@ -426,4 +426,40 @@ defmodule Emergencias.Dominio.Necesidad do
       _otro -> {:error, :asociada_a_invalida}
     end
   end
+
+  # ---------------------------------------------------------------------------
+  # Representación en texto
+  # ---------------------------------------------------------------------------
+
+  @doc """
+  Representación legible de la necesidad, pensada para mostrar en consola.
+
+  Si el tipo es `:otra` se muestra el texto de `tipo_otro` entre paréntesis.
+  `asociada_a` se muestra como `zona:centro`, `albergue:A01` o `persona:123`.
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = necesidad) do
+    "Necesidad #{necesidad.id} | " <>
+      "Tipo: #{tipo_a_texto(necesidad)} | " <>
+      "Descripción: #{necesidad.descripcion} | " <>
+      "Cantidad: #{necesidad.cantidad_asignada}/#{necesidad.cantidad_requerida} " <>
+      "(faltan #{cantidad_faltante(necesidad)}) | " <>
+      "Zona: #{necesidad.zona} | " <>
+      "Prioridad: #{texto_atomo(necesidad.prioridad)} | " <>
+      "Responsable: #{necesidad.responsable} | " <>
+      "Estado: #{texto_atomo(necesidad.estado)} | " <>
+      "Asociada a: #{asociada_a_a_texto(necesidad.asociada_a)} | " <>
+      "Fecha: #{necesidad.fecha}"
+  end
+
+  defimpl String.Chars do
+    def to_string(necesidad), do: Emergencias.Dominio.Necesidad.to_string(necesidad)
+  end
+
+  defp tipo_a_texto(%__MODULE__{tipo: :otra, tipo_otro: otro}) when is_binary(otro),
+    do: "otra (#{otro})"
+
+  defp tipo_a_texto(%__MODULE__{tipo: tipo}), do: texto_atomo(tipo)
+
+  defp texto_atomo(atomo), do: atomo |> Atom.to_string() |> String.replace("_", " ")
 end

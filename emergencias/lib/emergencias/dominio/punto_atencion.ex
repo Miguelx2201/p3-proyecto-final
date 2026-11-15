@@ -72,4 +72,21 @@ defmodule Emergencias.Dominio.PuntoAtencion do
   end
 
   def de_linea(_otro), do: {:error, :linea_invalida}
+
+  @doc """
+  Representación legible del punto de atención, pensada para mostrar en consola.
+
+      iex> {:ok, p} = Emergencias.Dominio.PuntoAtencion.crear("P01", "Carpa norte", 12)
+      iex> Emergencias.Dominio.PuntoAtencion.to_string(p)
+      "Punto de atención P01 - Carpa norte | Personas afectadas: 12"
+  """
+  @spec to_string(t()) :: String.t()
+  def to_string(%__MODULE__{} = punto) do
+    "Punto de atención #{punto.codigo} - #{punto.nombre} | " <>
+      "Personas afectadas: #{punto.personas_afectadas}"
+  end
+
+  defimpl String.Chars do
+    def to_string(punto), do: Emergencias.Dominio.PuntoAtencion.to_string(punto)
+  end
 end
