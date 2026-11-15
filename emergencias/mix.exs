@@ -8,6 +8,7 @@ defmodule Emergencias.MixProject do
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -26,6 +27,12 @@ defmodule Emergencias.MixProject do
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
+  end
+
+  # `mix test` no arranca la aplicación: los servidores tienen nombre fijo y cada
+  # prueba arranca los que necesita (así no se mezclan estados entre pruebas).
+  defp aliases do
+    [test: "test --no-start"]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
