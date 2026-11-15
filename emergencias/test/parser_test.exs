@@ -277,4 +277,126 @@ defmodule Emergencias.CLI.ParserTest do
       assert Parser.convertir(nil, :texto) == {:error, :valor_invalido}
     end
   end
+
+  describe "connect" do
+    test "válido (ejemplo del issue)" do
+      assert Parser.parsear("connect laura 1234 coordinador centro") ==
+               {:ok, {:connect, ["laura", "1234", :coordinador, "centro"]}}
+    end
+
+    test "el tipo no distingue mayúsculas" do
+      assert Parser.parsear("connect ana 1234 VOLUNTARIO centro") ==
+               {:ok, {:connect, ["ana", "1234", :voluntario, "centro"]}}
+    end
+
+    test "inválido: tipo de usuario" do
+      assert Parser.parsear("connect laura 1234 rey centro") ==
+               {:error, {:valor_invalido, :tipo}}
+    end
+
+    test "inválido: faltan argumentos" do
+      assert Parser.parsear("connect laura 1234") == {:error, {:argumentos, esperados: 4}}
+    end
+  end
+
+  describe "disconnect" do
+    test "válido: no recibe argumentos" do
+      assert Parser.parsear("disconnect") == {:ok, {:disconnect, []}}
+    end
+
+    test "inválido: sobran argumentos" do
+      assert Parser.parsear("disconnect ahora") == {:error, {:argumentos, esperados: 0}}
+    end
+  end
+
+  describe "register_zone" do
+    test "válido (ejemplo del issue)" do
+      assert Parser.parsear("register_zone centro \"Zona Centro\" critico") ==
+               {:ok, {:register_zone, ["centro", "Zona Centro", :critico]}}
+    end
+
+    test "el nivel acepta critica y critico" do
+      assert Parser.parsear("register_zone centro Centro critica") ==
+               {:ok, {:register_zone, ["centro", "Centro", :critico]}}
+    end
+
+    test "inválido: nivel" do
+      assert Parser.parsear("register_zone centro Centro enorme") ==
+               {:error, {:valor_invalido, :nivel}}
+    end
+
+    test "inválido: faltan argumentos" do
+      assert Parser.parsear("register_zone centro") == {:error, {:argumentos, esperados: 3}}
+    end
+  end
+
+  describe "register_sector" do
+    test "válido (ejemplo del issue)" do
+      assert Parser.parsear("register_sector centro S1 \"Sector 1\" 200") ==
+               {:ok, {:register_sector, ["centro", "S1", "Sector 1", 200]}}
+    end
+
+    test "inválido: personas no es un número" do
+      assert Parser.parsear("register_sector centro S1 Sector abc") ==
+               {:error, {:valor_invalido, :personas}}
+    end
+
+    test "inválido: personas negativo" do
+      assert Parser.parsear("register_sector centro S1 Sector -1") ==
+               {:error, {:valor_invalido, :personas}}
+    end
+
+    test "inválido: faltan argumentos" do
+      assert Parser.parsear("register_sector centro S1") ==
+               {:error, {:argumentos, esperados: 4}}
+    end
+  end
+
+  describe "register_point" do
+    test "válido (ejemplo del issue)" do
+      assert Parser.parsear("register_point centro S1 P1 \"Punto 3\" 40") ==
+               {:ok, {:register_point, ["centro", "S1", "P1", "Punto 3", 40]}}
+    end
+
+    test "inválido: personas no es un número" do
+      assert Parser.parsear("register_point centro S1 P1 Punto 3.5") ==
+               {:error, {:valor_invalido, :personas}}
+    end
+
+    test "inválido: faltan argumentos" do
+      assert Parser.parsear("register_point centro S1 P1") ==
+               {:error, {:argumentos, esperados: 5}}
+    end
+  end
+
+  describe "zone_status y zone_stats" do
+    test "zone_status válido" do
+      assert Parser.parsear("zone_status centro") == {:ok, {:zone_status, ["centro"]}}
+    end
+
+    test "zone_stats válido" do
+      assert Parser.parsear("zone_stats centro") == {:ok, {:zone_stats, ["centro"]}}
+    end
+
+    test "inválido: sin zona" do
+      assert Parser.parsear("zone_status") == {:error, {:argumentos, esperados: 1}}
+      assert Parser.parsear("zone_stats") == {:error, {:argumentos, esperados: 1}}
+    end
+
+    test "inválido: sobran argumentos" do
+      assert Parser.parsear("zone_stats centro norte") ==
+               {:error, {:argumentos, esperados: 1}}
+    end
+  end
+
+    describe "help y exit" do
+    test "válidos" do
+      assert Parser.parsear("help") == {:ok, {:help, []}}
+      assert Parser.parsear("exit") == {:ok, {:exit, []}}
+    end
+
+    test "inválido: sobran argumentos" do
+      assert Parser.parsear("exit ahora") == {:error, {:argumentos, esperados: 0}}
+    end
+  end
 end

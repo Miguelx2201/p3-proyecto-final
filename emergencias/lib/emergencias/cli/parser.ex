@@ -50,11 +50,25 @@ defmodule Emergencias.CLI.Parser do
   #   * `{:filtros, [{clave, tipo}]}`: filtros `clave=valor`; las claves de la
   #     lista son las únicas permitidas.
   @comandos %{
+    "help" => {:help, []},
+    "exit" => {:exit, []},
     "connect" =>
       {:connect, [usuario: :texto, contrasena: :texto, tipo: :tipo_usuario, zona: :texto]},
     "disconnect" => {:disconnect, []},
-    "help" => {:help, []},
-    "exit" => {:exit, []},
+    "register_zone" => {:register_zone, [codigo: :texto, nombre: :texto, nivel: :nivel]},
+    "register_sector" =>
+      {:register_sector, [zona: :texto, codigo: :texto, nombre: :texto, personas: :entero]},
+    "register_point" =>
+      {:register_point,
+       [
+         zona: :texto,
+         sector: :texto,
+         codigo: :texto,
+         nombre: :texto,
+         personas: :entero
+       ]},
+    "zone_status" => {:zone_status, [zona: :texto]},
+    "zone_stats" => {:zone_stats, [zona: :texto]},
     "register_need" =>
       {:register_need,
        [
@@ -76,7 +90,8 @@ defmodule Emergencias.CLI.Parser do
         ]}},
     "list_resources" => {:list_resources, {:filtros, [zona: :texto, categoria: :categoria]}},
     "list_pets" =>
-      {:list_pets, {:filtros, [zona: :texto, especie: :texto, color: :texto, tamano: :tamano]}},
+      {:list_pets,
+       {:filtros, [zona: :texto, especie: :texto, color: :texto, tamano: :tamano]}},
     "find_person" =>
       {:find_person, {:filtros, [nombre: :texto, zona: :texto, estado: :estado_persona]}}
   }

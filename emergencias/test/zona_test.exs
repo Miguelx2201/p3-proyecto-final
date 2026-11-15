@@ -149,7 +149,7 @@ defmodule Emergencias.Dominio.ZonaTest do
     end
 
     test "conserva el orden de los sectores y los demás campos de la zona" do
-      zona = Fabrica.zona(nivel: :bajo, personas_afectadas: 90)
+      %Zona{} = zona = Fabrica.zona(nivel: :bajo, personas_afectadas: 90)
       zona = %Zona{zona | sectores: zona_con_sectores().sectores}
 
       assert {:ok, nueva} = Zona.agregar_punto(zona, "S1", Fabrica.punto_atencion())
