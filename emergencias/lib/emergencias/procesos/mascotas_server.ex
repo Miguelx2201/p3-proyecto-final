@@ -153,7 +153,17 @@ defmodule Emergencias.Procesos.MascotasServer do
       ) do
     numero = estado.contador + 1
 
-    case Mascota.crear(formatear_id(numero), tipo, especie, nombre, carac, color, tamano, zona, contacto) do
+    case Mascota.crear(
+           formatear_id(numero),
+           tipo,
+           especie,
+           nombre,
+           carac,
+           color,
+           tamano,
+           zona,
+           contacto
+         ) do
       {:ok, mascota} ->
         reportes = Map.put(estado.reportes, mascota.id, mascota)
         confirmar_cambio(%{estado | reportes: reportes, contador: numero}, estado, {:ok, mascota})
