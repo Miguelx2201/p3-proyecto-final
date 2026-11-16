@@ -32,7 +32,7 @@ defmodule Emergencias.MixProject do
   # `mix test` no arranca la aplicación: los servidores tienen nombre fijo y cada
   # prueba arranca los que necesita (así no se mezclan estados entre pruebas).
   defp aliases do
-    [test: "test --no-start"]
+    [test: "test --no-start", emergencias: "run -e Emergencias.CLI.iniciar()"]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
