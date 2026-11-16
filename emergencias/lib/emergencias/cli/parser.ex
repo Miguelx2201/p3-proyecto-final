@@ -47,8 +47,17 @@ defmodule Emergencias.CLI.Parser do
     tipo_usuario: [:administrador, :coordinador, :voluntario, :ciudadano],
     nivel: [:critico, :alto, :medio, :bajo],
     prioridad: [:critica, :alta, :media, :baja],
-    categoria: [:agua, :alimentos, :medicinas, :ropa, :refugio],
-    estado_necesidad: [:pendiente, :en_proceso, :atendida, :cancelada],
+    categoria: [
+      :agua,
+      :alimentos,
+      :medicamentos,
+      :primeros_auxilios,
+      :refugio,
+      :transporte,
+      :rescate,
+      :otra
+    ],
+    estado_necesidad: [:pendiente, :asignada, :en_atencion, :atendida, :cancelada],
     estado_persona: [
       :sin_informacion,
       :reportada,
@@ -345,7 +354,7 @@ defmodule Emergencias.CLI.Parser do
   def convertir(texto, tipo) when tipo in [:tipo_necesidad, :categoria] do
     case String.split(texto, ":", parts: 2) do
       [prefijo, detalle] -> convertir_otra(prefijo, detalle)
-      [_sin_dos_puntos] -> Util.parsear_enum(texto, @enumeraciones.categoria)
+      [_sin_dos_puntos] -> Util.parsear_enum(texto, @enumeraciones.categoria -- [:otra])
     end
   end
 

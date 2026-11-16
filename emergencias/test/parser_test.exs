@@ -430,8 +430,8 @@ defmodule Emergencias.CLI.ParserTest do
     end
 
     test "set_need_status válido e inválido" do
-      assert Parser.parsear("set_need_status N001 en_proceso") ==
-               {:ok, {:set_need_status, ["N001", :en_proceso]}}
+      assert Parser.parsear("set_need_status N001 en_atencion") ==
+               {:ok, {:set_need_status, ["N001", :en_atencion]}}
 
       assert Parser.parsear("set_need_status N001 hecho") ==
                {:error, {:valor_invalido, :estado}}
