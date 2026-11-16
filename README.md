@@ -9,7 +9,7 @@ Sistema multiusuario escrito en **Elixir** que simula una plataforma para coordi
 | Nombre completo | Código | Correo |
 |---|---|---|
 | Juan Miguel Gutierrez Vargas | 1091885531 | juanm.gutierrezv@uqvirtual.edu.co |
-| Natalia Contreras Mora | completar | completar |
+| Natalia Contreras Mora | 1013120297 | natalia.contrerasm@uqvirtual.edu.co |
 
 ## Requisitos
 
@@ -19,13 +19,14 @@ Sistema multiusuario escrito en **Elixir** que simula una plataforma para coordi
 ## Cómo ejecutar
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/Miguelx2201/p3-proyecto-final
 cd emergencias
-mix deps.get          # descarga dependencias (por ahora no hay)
+mix deps.get          # descarga dependencias
 mix compile           # compila el proyecto
-iex -S mix            # consola interactiva con la aplicación iniciada
+mix emergencias       # consola interactiva con la aplicación iniciada
 mix test              # ejecuta las pruebas
-mix format            # formatea el código (ejecutar antes de cada commit)
+mix run -e "Emergencias.Demo.flujo_ejemplo()" # ejecuta el flujo de ejemplo propuesto 
+mix run -e "Emergencias.Demo.conflicto_concurrente()" # ejecuta el conflicto concurrente 
 ```
 
 ## Estructura del proyecto
@@ -71,35 +72,13 @@ docs/diagramas/                    diagramas finales
 | Estado de mensaje | `:pendiente`, `:entregado` |
 | Mascota: tipo / estado / tamaño | `:perdida`, `:encontrada` / `:activa`, `:posible_coincidencia`, `:resuelta` / `:pequeno`, `:mediano`, `:grande` |
 
-**Persistencia.** CSV con separador `;`, una cabecera por archivo, carpeta `data/` (configurable con `Application.get_env(:emergencias, :data_dir, "data")`). Los textos libres se sanitizan (se reemplazan `;` y saltos de línea por espacio). Las estructuras anidadas se guardan en archivos aparte, una fila por elemento. Cada `GenServer` carga su archivo en `init/1` y lo reescribe después de cada cambio exitoso.
+**Persistencia.** CSV con separador `;`, una cabecera por archivo, carpeta `data/`. Los textos libres se sanitizan (se reemplazan `;` y saltos de línea por espacio). Las estructuras anidadas se guardan en archivos aparte, una fila por elemento. Cada `GenServer` carga su archivo en `init/1` y lo reescribe después de cada cambio exitoso.
 
 **Fechas.** `DateTime.utc_now() |> DateTime.to_iso8601()`.
 
 ### Patrón GenServer
 
 Cada llamada entra por `handle_call`, que procesa un mensaje a la vez. Eso serializa las operaciones y evita las condiciones de carrera.
-
-```elixir
-defmodule Emergencias.Procesos.EjemploServer do
-  use GenServer
-
-  # API (la usa el resto del programa)
-  def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
-  def agregar(dato), do: GenServer.call(__MODULE__, {:agregar, dato})
-
-  # Callbacks (corren dentro del proceso, de a un mensaje a la vez)
-  @impl true
-  def init(:ok), do: {:ok, %{items: %{}}}
-
-  @impl true
-  def handle_call({:agregar, dato}, _from, estado) do
-    case ModuloPuro.agregar(estado.items, dato) do
-      {:ok, items} -> {:reply, :ok, %{estado | items: items}}
-      {:error, _} = error -> {:reply, error, estado}
-    end
-  end
-end
-```
 
 ### Árbol de supervisión propuesto
 
@@ -112,12 +91,3 @@ Emergencias.Supervisor (one_for_one)
  └─ AlberguesSupervisor      (DynamicSupervisor)
       └─ AlbergueServer A01, A02...   (un GenServer por albergue)
 ```
-
-## Flujo de trabajo con Git
-
-1. La rama `main` está protegida: nadie hace commit directo.
-2. Cada issue se trabaja en su propia rama: `issue-N-nombre-corto` (por ejemplo `issue-4-usuario`).
-3. Antes de cada commit: `mix format`. Antes de abrir el Pull Request: `mix compile --warnings-as-errors` y `mix test`.
-4. Se abre un Pull Request hacia `main` cuyo texto incluye `Closes #N` para cerrar el issue al fusionarlo.
-5. Al menos otro integrante revisa y aprueba el Pull Request antes de fusionarlo.
-6. Mensajes de commit cortos y en español, en presente: `Agrega entidad Usuario`, `Corrige validación de cantidad`.
